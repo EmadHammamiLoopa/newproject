@@ -1,0 +1,56 @@
+<app-header
+  [title]="channel ? channel.name : ''"
+  [back]="true"
+>
+  <div id="end-buttons">
+    <ion-button
+      shape="round"
+      (click)="presentPopover($event)"
+    >
+      <i class="fas fa-ellipsis-v"></i>
+    </ion-button>
+  </div>
+</app-header>
+
+
+<ion-item class="text-center" *ngIf="!pageLoading && (!channel)">
+  <ion-text color="danger">This channel is not public yet, it still under verification by Loopa team </ion-text>
+</ion-item>
+
+<ion-content #content>
+  <app-loader *ngIf="pageLoading" ></app-loader>
+
+  <ion-refresher slot="fixed" pullFactor="0.5" pullMin="100" pullMax="200"  (ionRefresh)="getChannelPosts($event, true)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="h-100 d-flex align-items-center" *ngIf="posts && !posts.length && !pageLoading">
+    <div class="w-100 text-center px-4">
+      <img src="./../../../../assets/images/svgs/posts.svg" alt="">
+      <span class="empty-alert d-block mt-4">There is no post in this channel yet!</span>
+    </div>
+  </div>
+
+  <div *ngIf="!pageLoading && posts && posts.length" class="mb-3">
+    <app-post [user]="user" class="my-3" (removePost)="deletePost(post)" *ngFor="let post of posts" [post]="post"></app-post>
+  </div>
+
+  <ion-infinite-scroll #infinitScroll threshold="100px" (ionInfinite)="getChannelPosts($event)">
+    <ion-infinite-scroll-content
+      loadingSpinner="crescent"
+    >
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+
+  <ion-fab
+    slot="fixed"
+    vertical="bottom"
+    horizontal="center"
+    (click)="showPostForm()"
+    *ngIf="channel && user && (channel.followedBy(user.id) || channel.user.id == user.id) && posts"
+  >
+    <ion-fab-button color="primary">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

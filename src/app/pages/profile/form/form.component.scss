@@ -1,0 +1,56 @@
+ion-content {
+  --padding-top: 16px;
+  --padding-end: 16px;
+  --padding-bottom: 16px;
+  --padding-start: 16px;
+}
+
+.form-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+
+.styled-list {
+  --ion-background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+}
+
+.styled-item {
+  --background: #f9f9f9;
+  --padding-start: 10px;
+  --padding-end: 10px;
+  margin: 10px 0;
+  border-radius: 10px;
+}
+
+.interest-list {
+  margin-top: 10px;
+}
+
+.interest-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f1f1f1;
+  border-radius: 20px;
+  margin: 5px;
+}
+
+.submit-button {
+  --background: #6200ea;
+  --color: #fff;
+  margin-top: 20px;
+}
+
+.error-message {
+  margin-top: -10px;
+  margin-bottom: 10px;
+  font-size: 0.8em;
+}

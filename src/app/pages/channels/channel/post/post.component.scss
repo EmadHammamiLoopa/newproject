@@ -1,0 +1,187 @@
+.date{
+  font-size: 14px;
+}
+.user-name, .star-value{
+  font-size: 15px;
+}
+.post-text{
+  font-size: 16px;
+  min-height: 65px;
+}
+
+/* Media container hover effect */
+.media-container {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 8px;
+  transition: box-shadow 0.3s ease;
+}
+
+.media-container:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Image container with hover effect */
+.media-container {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 8px;
+  transition: box-shadow 0.3s ease;
+}
+.media-container:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Image styles */
+.post-media-img {
+  width: 100%;
+  height: auto;
+  max-width: 150px; /* Small size initially */
+  border-radius: 8px;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+.post-media-img.enlarged {
+  max-width: 100%; /* Enlarge on click */
+  transform: scale(1.5);
+  filter: brightness(0.95);
+}
+
+/* Expiry circle wrapper */
+.expiry-circle-wrapper {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 35px; /* Adjust to the circle size */
+  height: 35px; /* Adjust to the circle size */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Circular progress bar */
+.expiry-circle {
+  position: relative;
+  width: 35px; /* Adjust size */
+  height: 35px; /* Adjust size */
+}
+
+.circle-svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: rotate(-90deg); /* Start from the top */
+}
+circle {
+  fill:rgb(202, 154, 136);
+  stroke-width: 5;
+}
+
+circle:first-child {
+  stroke: #ddd; /* Background circle */
+}
+
+.circle-progress {
+  stroke: blue; /* Progress color */
+  stroke-dasharray: 110; /* Adjusted based on the circumference of the circle */
+  stroke-dashoffset: 0; /* This dynamically changes based on progress */
+  transition: stroke-dashoffset 1s linear, stroke 0.5s ease;
+}
+/* Time remaining text inside the circle */
+.circle-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Custom Popover container */
+.custom-popover {
+  position: absolute;
+  top: 35px;
+  right: 0;
+  background-color: #fff;
+  border-radius: 12px; /* Smooth rounded corners */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Softer and more prominent shadow */
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+  width: 200px; /* More width to fit longer text */
+  visibility: hidden; /* Initially hidden */
+}
+
+/* Show the popover */
+.custom-popover.show {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
+/* Dropdown Items */
+.visibility-dropdown ion-item {
+  padding: 10px 10px; /* Larger padding for more spacing */
+  font-size: 15px; /* Slightly bigger font size */
+  transition: background-color 0.3s ease, color 0.3s ease;
+  display: flex;
+  align-items: center; /* Align icons and text */
+  border-bottom: 1px solid #eee; /* Subtle bottom border between items */
+}
+
+/* Last item without bottom border */
+.visibility-dropdown ion-item:last-child {
+  border-bottom: none;
+}
+
+/* Hover effect */
+.visibility-dropdown ion-item:hover {
+  background-color: #f7f7f7; /* Light gray hover background */
+  color: #333; /* Darker text on hover */
+}
+
+/* Icon Styling */
+.visibility-dropdown ion-icon {
+  color: #666;
+  font-size: 10px;
+  margin-right: 12px; /* Ensure enough space between icon and text */
+}
+
+/* Label Styling */
+.visibility-dropdown ion-label {
+  font-size: 15px;
+  color: #333; /* Darker and more readable text */
+  font-weight: 500; /* Medium weight for better readability */
+}
+
+/* Add smooth animations */
+.custom-popover {
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.custom-popover.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.custom-popover.hide {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Smooth hover transition for icons */
+.visibility-dropdown ion-icon:hover {
+  transform: scale(1.1); /* Slightly increase icon size on hover */
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Add padding to the dropdown */
+.visibility-dropdown {
+  padding: 10px 0;
+  border-radius: 8px;
+}

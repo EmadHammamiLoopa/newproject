@@ -1,0 +1,76 @@
+<app-header
+  [title]="job ? job.title : ''"
+  [back]="true"
+>
+  <div id="end-buttons">
+    <ion-button
+      shape="round"
+      *ngIf="job && user && job.user.id != user.id"
+      (click)="presentPopover($event)"
+    >
+      <i class="fas fa-ellipsis-v"></i>
+    </ion-button>
+  </div>
+</app-header>
+
+<app-loader *ngIf="pageLoading"></app-loader>
+
+<ion-content>
+  <div *ngIf="job">
+    <div class="position-relative">
+      <div class="w-100 image-container">
+        <img [src]="job.photo" class="w-100 job-image" alt="">
+      </div>
+      <ion-fab horizontal="end" vertical="bottom" class="mt-5" *ngIf="job.user.id == user.id">
+        <ion-fab-button (click)="removeConfirmation()" color="danger">
+          <ion-icon name="trash"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
+    </div>
+    <ion-item>
+      <ion-label class="ml-2">
+        <span class="job-title font-weight-bold d-block">{{ job.title }} </span>
+        <span class="">{{ job.company }}</span>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">E-mail</span>
+        <span>{{ job.email }}</span>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Location</span>
+        <span>{{ job.country + ', ' + job.city }}</span>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Description</span>
+        <span>{{ job.description }}</span>
+      </ion-label>
+    </ion-item>
+  </div>
+</ion-content>
+
+<ion-footer class="px-3">
+  <ion-button
+    size="default"
+    color="primary"
+    expand="block"
+    (click)="openMail()"
+    *ngIf="job && user && job.user.id != user.id"
+  >
+    Contact Us
+  </ion-button>
+  <ion-button
+    size="default"
+    color="secondary"
+    expand="block"
+    (click)="sendEmail()"
+    *ngIf="job && user && job.user.id != user.id"
+  >
+    Send Email
+  </ion-button>
+</ion-footer>

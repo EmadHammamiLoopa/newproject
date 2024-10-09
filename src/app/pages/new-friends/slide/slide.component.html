@@ -1,0 +1,36 @@
+<div class="h-100 w-100 d-flex flex-column">
+  <div class="w-100 flex-grow-1 d-flex position-relative overflow-hidden">
+    <div class="my-auto w-100 ">
+      <img (click)="!random ? showProfile() : null" [src]="avatarUrl" class="w-100" alt="">
+    </div>
+    <div class="p-2 user-details w-100 pl-3">
+      <span (click)="!random ? showProfile() : null" class="user-name d-flex align-items-center">
+        {{ user.fullName }} {{ user.getAge(true) ? (',' + user.getAge(true)) : '' }}
+        <span *ngIf="user.online"><i class="fas fa-circle online-icon ml-2"></i></span>
+      </span>
+      <span class="d-block text-left other-info ">{{ user.gender }}, {{ user.city }}</span>
+    </div>
+  </div>
+  <div class="px-3 py-3 d-flex flex-grow-auto justify-content-around w-100">
+    <div class="p-0" *ngIf="random">
+        <ion-button shape="round" class="rounded-button" (click)="videoCall()" color="primary">
+          <span><i class="fas fa-video"></i></span>
+        </ion-button>
+    </div>
+    <div *ngIf="!last" class="p-0" >
+      <ion-button shape="round" class="rounded-button" (click)="onSkip.emit()" color="primary">
+        <span><i class="fas fa-times"></i></span>
+      </ion-button>
+    </div>
+    <div *ngIf="last" class="p-0" >
+      <ion-button shape="round" class="rounded-button" (click)="onRefresh.emit()" color="primary">
+        <span><i class="fas fa-sync"></i></span>
+      </ion-button>
+    </div>
+    <div class="p-0" *ngIf="random">
+        <ion-button shape="round" class="rounded-button" (click)="navigateTo('/messages/chat/' + user.id)" color="primary">
+          <span><i class="fas fa-comments"></i></span>
+        </ion-button>
+    </div>
+  </div>
+</div>

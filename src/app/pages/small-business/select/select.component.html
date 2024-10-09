@@ -1,0 +1,24 @@
+<app-header title="Small Business" [menu]="true" ></app-header>
+
+<ion-content>
+  <img class="w-100 image" src="./../../../../assets/images/svgs/business.svg" alt="">
+  <div class="w-100 h-100 d-flex align-items-center content">
+    <div class="text-center px-5 d-md-flex align-items-center justify-content-center w-100">
+      <ion-chip routerLink="/tabs/small-business/jobs" class="chip">
+        <ion-label class="w-100 text-center">
+          <span>Jobs</span>
+        </ion-label>
+      </ion-chip>
+      <div class="mx-2 position-relative">
+        <hr class="position-absolute bg-secondary">
+        <span class="">or</span>
+      </div>
+      <ion-chip routerLink="/tabs/small-business/services" class="chip">
+        <ion-label class="w-100 text-center">
+          <span>Service</span>
+        </ion-label>
+      </ion-chip>
+    </div>
+  </div>
+</ion-content>
+

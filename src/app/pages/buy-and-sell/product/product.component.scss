@@ -1,0 +1,19 @@
+.product-title {
+    display: block;
+    font-size: 16px;
+    color: var(--ion-color-primary);
+  }
+
+  .poster-link {
+    text-decoration: none;
+    color: var(--ion-color-primary); /* Primary color for the link */
+    font-weight: bold;
+  }
+
+  .poster-link:hover {
+    text-decoration: underline;
+  }
+
+  .poster-link:active {
+    color: var(--ion-color-dark); /* Darker color on active state */
+  }

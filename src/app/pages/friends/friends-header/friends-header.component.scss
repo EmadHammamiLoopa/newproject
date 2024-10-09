@@ -1,0 +1,11 @@
+.tab-button{
+  --border-radius: 0px;
+  font-size: 14px;
+  height: 45px;
+}
+.tab-button.selected{
+  border-bottom:2px solid var(--ion-color-primary)!important;
+}
+.icon{
+  font-size: 20px;
+}

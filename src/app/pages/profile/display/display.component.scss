@@ -1,0 +1,110 @@
+/* Profile Content */
+.profile-content {
+  --ion-background-color: #f4f5f8; /* Light gray background */
+  padding: 20px;
+}
+
+/* Profile Header */
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px; /* Spacing between avatar and gallery */
+}
+
+/* Main Avatar */
+.main-avatar {
+  position: relative;
+}
+.main-avatar img {
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow for the avatar */
+}
+.profile-avatar-big {
+  @apply w-64 h-64 rounded-full object-cover;
+}
+
+/* Avatar Gallery */
+.avatar-gallery {
+  display: flex;
+  justify-content: center;
+  gap: 10px; /* Consistent gap between avatars */
+}
+
+.avatar-slide {
+  position: relative;
+  transition: transform 0.3s ease-in-out; /* Smooth transition for hover effect */
+}
+.avatar-slide:hover {
+  transform: scale(1.05); /* Slight zoom on hover */
+}
+
+.avatar-slide img {
+  border-radius: 5px;
+  border: 2px solid #ddd; /* Border for small avatars */
+}
+
+/* Avatar Actions */
+.avatar-actions {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  gap: 5px;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for buttons */
+  border-radius: 5px;
+  padding: 2px;
+}
+.profile-avatar-small {
+  @apply w-12 h-12 rounded-full object-cover;
+}
+
+/* User Info */
+.user-info {
+  margin-top: 10px;
+  text-align: center; /* Centered text */
+}
+.user-info h1 {
+  @apply text-2xl font-bold text-gray-800;
+}
+.user-info p {
+  @apply text-gray-600 text-sm;
+}
+
+/* Profile Card */
+.profile-card {
+  margin-top: 20px;
+  @apply bg-white rounded-lg shadow-lg p-6;
+}
+
+/* No Profile Section */
+.no-profile {
+  text-align: center;
+  margin-top: 50px;
+  @apply text-gray-600;
+}
+.no-profile img {
+  width: 300px; /* Reduced image size for better layout */
+  margin-bottom: 20px;
+}
+.no-profile p {
+  @apply text-lg font-medium;
+}
+
+/* Custom Button Styles */
+.icon-button {
+  --background: #ffffff;
+  --color: #007bff; /* Custom primary color */
+  --ion-button-hover-background: #007bff;
+  --ion-button-hover-color: #ffffff;
+  border-radius: 50px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* Subtle shadow */
+}
+
+/* TailwindCSS Classes */
+@apply bg-gray-100 text-gray-800; /* Global background and text color */
+@apply p-4 rounded-lg shadow-md; /* Padding, border-radius, and shadow */
+@apply flex flex-col items-center; /* Flexbox layout */
+@apply space-y-4; /* Spacing between elements */
+@apply font-bold text-xl; /* Bold, large text */
+@apply text-center; /* Centered text */

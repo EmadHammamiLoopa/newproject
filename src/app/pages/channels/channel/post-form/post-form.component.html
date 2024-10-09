@@ -1,0 +1,205 @@
+<app-header
+  title=""
+  [modal]="true"
+  [back]="true"
+>
+  <div id="end-buttons">
+    <ion-button
+      (click)="addPost()"
+      [disabled]="postLoading"
+    >
+      <span *ngIf="postLoading"><i class="fas fa-spinner fa-spin mr-1"></i></span>
+      Save
+    </ion-button>
+  </div>
+</app-header>
+
+<ion-content
+  [style]="{'--background': postBackColor, '--color': postTextColor}"
+>
+
+  <ion-item>
+    <ion-label>Visibility</ion-label>
+    <ion-select [(ngModel)]="visibility">
+      <ion-select-option value="public">Public</ion-select-option>
+      <ion-select-option value="friends-only">Only Friends</ion-select-option>
+      <ion-select-option value="private">Only Me</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-item
+    [style]="{'--background': 'transparent', '--color': postTextColor}"
+  >
+    <span class="ml-3"><i class="fas fa-user-secret"></i></span>
+    <ion-label class="ml-2">
+      Anonyme
+    </ion-label>
+    <ion-toggle [(ngModel)]="anonyme"></ion-toggle>
+  </ion-item>
+
+
+
+  <!-- Show event fields if it's a static_events channel -->
+<!-- Show event fields if it's a static_events channel -->
+<!-- Show event fields if it's a static_events channel -->
+<div *ngIf="showEventFields">
+  <!-- Date Picker -->
+  <ion-item 
+    [style]="{'--background': postBackColor, '--color': postTextColor}" 
+    class="ion-margin-bottom"
+  >
+    <ion-label>Date</ion-label>
+    <ion-datetime 
+      [(ngModel)]="eventDate" 
+      presentation="date" 
+      display-format="DD MMM YYYY"
+      placeholder="Select date"
+    ></ion-datetime>
+  </ion-item>
+
+  <!-- Location Input -->
+  <ion-item 
+    [style]="{'--background': postBackColor, '--color': postTextColor}" 
+    class="ion-margin-bottom"
+  >
+    <ion-label>Location</ion-label>
+    <ion-input 
+      [(ngModel)]="eventLocation" 
+      placeholder="Enter location"
+      [style]="{'--color': postTextColor}"
+    ></ion-input>
+  </ion-item>
+
+  <!-- Time Picker -->
+  <ion-item 
+    [style]="{'--background': postBackColor, '--color': postTextColor}" 
+    class="ion-margin-bottom"
+  >
+    <ion-label>Time</ion-label>
+    <ion-datetime 
+      [(ngModel)]="eventTime" 
+      presentation="time"
+      display-format="HH:mm"
+      picker-format="HH:mm"
+      placeholder="Select time"
+    ></ion-datetime>
+  </ion-item>
+</div>
+
+  <!-- Other static_dating fields (Relationship Goals, Age Range, etc.) -->
+  <div *ngIf="showDatingFields">
+    <!-- Relationship Goals -->
+    <ion-item 
+      [style]="{'--background': postBackColor, '--color': postTextColor}" 
+      class="ion-margin-bottom"
+    >
+      <ion-label>Relationship Goals</ion-label>
+      <ion-select [(ngModel)]="relationshipGoals" placeholder="Select goal">
+        <ion-select-option value="casual">Casual</ion-select-option>
+        <ion-select-option value="long-term">Long-term</ion-select-option>
+        <ion-select-option value="friendship">Friendship</ion-select-option>
+      </ion-select>
+    </ion-item>
+
+    <!-- Age Range -->
+    <ion-item 
+      [style]="{'--background': postBackColor, '--color': postTextColor}" 
+      class="ion-margin-bottom"
+    >
+      <ion-label>Age Range</ion-label>
+      <ion-range dualKnobs="true" min="18" max="99" step="1" snaps="true" [(ngModel)]="ageRange">
+        <ion-label slot="start">{{ ageRange.lower }}</ion-label>
+        <ion-label slot="end">{{ ageRange.upper }}</ion-label>
+      </ion-range>
+    </ion-item>
+
+    <!-- Interests or Hobbies -->
+    <ion-item 
+      [style]="{'--background': postBackColor, '--color': postTextColor}" 
+      class="ion-margin-bottom"
+    >
+      <ion-label>Interests or Hobbies</ion-label>
+      <ion-input 
+        [(ngModel)]="interests" 
+        placeholder="Enter interests or hobbies"
+        [style]="{'--color': postTextColor}"
+      ></ion-input>
+    </ion-item>
+
+    <!-- Hint about me -->
+    <ion-item 
+      [style]="{'--background': postBackColor, '--color': postTextColor}" 
+      class="ion-margin-bottom"
+    >
+      <ion-label>Hint about me</ion-label>
+      <ion-textarea 
+        [(ngModel)]="hintAboutMe" 
+        placeholder="Write a hint about yourself"
+        [style]="{'--color': postTextColor}"
+      ></ion-textarea>
+    </ion-item>
+  </div>
+
+  <!-- Media Preview Section -->
+  <div *ngIf="mediaPreview" class="media-preview">
+    <img *ngIf="mediaFile?.type.startsWith('image')" [src]="mediaPreview" alt="media preview" class="media-preview-img">
+    <video *ngIf="mediaFile?.type.startsWith('video')" controls class="media-preview-video">
+      <source [src]="mediaPreview" type="video/mp4">
+    </video>
+    <ion-button (click)="removeMedia()" color="danger" size="small">Remove Media</ion-button>
+  </div>
+
+  <!-- Post Textarea Section -->
+  <ion-item
+    class="post-textarea h-100"
+    [style]="{'--color': postTextColor}"
+    lines="none"
+  >
+    <ion-textarea
+      autoGrow
+      class="pl-2 ion-no-padding h-100"
+      rows="10"
+      [(ngModel)]="postText"
+      [maxlength]="255"
+      placeholder="Share your thoughts and experiences with people around you"
+    ></ion-textarea>
+  </ion-item>
+
+  <!-- FAB for Palette -->
+  <ion-fab
+    slot="fixed"
+    vertical="bottom"
+    horizontal="end"
+    class="mx-2"
+  >
+    <ion-fab-button
+      [style]="{'--background': postBackColor, '--color': postTextColor}"
+    >
+      <i class="fas fa-palette"></i>
+    </ion-fab-button>
+    <ion-fab-list side="top">
+      <ion-fab-button
+        *ngFor="let color of colors"
+        [style]="{'--background': color.background}"
+        (click)="selectColor(color)"
+      >
+      </ion-fab-button>
+    </ion-fab-list>
+  </ion-fab>
+
+  <!-- Hidden input for media selection -->
+  <input type="file" #fileInput (change)="onMediaSelected($event)" hidden accept="image/*,video/*">
+
+  <!-- FAB for Camera Icon (Positioned Bottom Left) -->
+  <ion-fab
+    slot="fixed"
+    vertical="bottom"
+    horizontal="start"
+    class="mx-2"
+  >
+    <ion-fab-button (click)="triggerFileInput()">
+      <ion-icon name="camera"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+</ion-content>

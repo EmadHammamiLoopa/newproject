@@ -1,0 +1,72 @@
+<app-header
+  [back]="true"
+  [title]="type ? (type == 'buy' ? 'Available Products' : 'Posted Products') : ''"
+  [backLink]="'/tabs/buy-and-sell'"
+  [search]="true"
+  (searchKeyUp)="search($event)"
+></app-header>
+
+<app-loader *ngIf="pageLoading"></app-loader>
+
+<ion-content>
+  <!-- Only show the category filter for buyers -->
+  <div *ngIf="type === 'buy'" class="category-container">
+    <ion-slides [options]="slideOpts" class="category-slides">
+      <ion-slide *ngFor="let category of categories">
+        <ion-chip (click)="selectCategory(category)" [color]="selectedCategory === category ? 'primary' : 'medium'">
+          <ion-label>{{ category }}</ion-label>
+        </ion-chip>
+      </ion-slide>
+    </ion-slides>
+  </div>
+  
+
+  <ion-refresher slot="fixed" pullFactor="0.5" pullMin="100" pullMax="200" (ionRefresh)="getProducts($event, true)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="h-100 w-100 d-flex flex-column py-2 text-center" *ngIf="products && !products.length">
+    <div class="flex-grow-1 d-flex align-items-end justify-content-center overflow-hidden px-2">
+      <img class="h-100 w-auto image" src="./../../../../assets/images/svgs/shop.svg" alt="">
+    </div>
+    <div class="flex-grow-1 py-2">
+      <span class="empty-alert">
+        <span *ngIf="type == 'sell'">
+          You didn't post any product yet<br/>
+          <small>Click on <i class="fas fa-plus"></i> to sell your first product</small>
+        </span>
+        <span *ngIf="type == 'buy'">There is no product available to buy yet!</span>
+      </span>
+    </div>
+  </div>
+
+  <ion-row *ngIf="products" class="px-2">
+    <ion-col size="4" size-sm="3" size-md="2" *ngFor="let product of products">
+      <ion-item button="true" [routerLink]="['/tabs/buy-and-sell/product/' + product.id]">
+        <div class="w-100">
+          <div class="square-container overflow-hidden">
+            <img class="w-100" [src]="product.photos[0]?.path" alt="">
+          </div>
+          <div class="px-2 pt-1">
+            <div class="d-flex justify-content-between align-items-center">
+              <span>{{ product.label | resumeText: 6 }}</span>
+              <small class="time">{{ product.createdAt | extractDiffTime }}</small>
+            </div>
+            <small>{{ product.price + ' ' + product.currency }}</small>
+          </div>
+        </div>
+      </ion-item>
+    </ion-col>
+  </ion-row>
+
+  <ion-infinite-scroll #infinitScroll threshold="100px" (ionInfinite)="getProducts($event)">
+    <ion-infinite-scroll-content loadingSpinner="crescent">
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="type == 'sell'">
+    <ion-fab-button color="primary" (click)="showProductForm()" class="mr-2">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

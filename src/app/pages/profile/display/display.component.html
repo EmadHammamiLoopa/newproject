@@ -1,0 +1,133 @@
+<app-header [back]="true" title="Profile">
+  <div id="end-buttons" *ngIf="user">
+    <ion-button shape="round" *ngIf="myProfile" routerLink="/tabs/profile/form">
+      <ion-icon name="create-outline"></ion-icon>
+    </ion-button>
+    <ion-button shape="round" *ngIf="myProfile" routerLink="/tabs/profile/settings">
+      <ion-icon name="settings-outline"></ion-icon>
+    </ion-button>
+    <ion-button *ngIf="!myProfile && user.isFriend" (click)="request()" shape="round">
+      <ion-icon name="person-remove-outline" class="text-success"></ion-icon>
+    </ion-button>
+    <ion-button *ngIf="!myProfile && !user.isFriend && user.request == null" (click)="request()" shape="round">
+      <ion-icon name="person-add-outline"></ion-icon>
+    </ion-button>
+    <ion-button *ngIf="!myProfile && !user.isFriend && user.request == 'requested'" (click)="request()" shape="round">
+      <ion-icon name="person-remove-outline" class="text-info"></ion-icon>
+    </ion-button>
+    <ion-button *ngIf="!myProfile && !user.isFriend && user.request == 'requesting'" (click)="request()" shape="round">
+      <ion-icon name="person-add-outline" class="text-warning"></ion-icon>
+    </ion-button>
+    <ion-button *ngIf="!myProfile && user.isFriend" (click)="videoCall()" shape="round">
+      <ion-icon name="videocam-outline"></ion-icon>
+    </ion-button>
+    <ion-button *ngIf="!myProfile && !user.isFriend" (click)="follow()" shape="round">
+      <ion-icon name="star-outline" [class.text-warning]="user.followed"></ion-icon>
+    </ion-button>
+    <ion-button (click)="presentPopover($event)" *ngIf="!myProfile && user.isFriend" shape="round">
+      <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+    </ion-button>
+  </div>
+</app-header>
+
+
+<ion-content class="profile-content">
+  <app-loader *ngIf="pageLoading"></app-loader>
+  <ion-refresher slot="fixed" pullFactor="0.5" pullMin="100" pullMax="200" (ionRefresh)="refresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div *ngIf="user && !pageLoading">
+    <div class="profile-header">
+      <div class="main-avatar">
+        <img [src]="user?.getMainAvatar() || './assets/images/default-avatar.png'" class="profile-avatar-big" alt="Main Avatar">
+        <ion-button *ngIf="myProfile && !isDefaultAvatar(mainAvatar)" size="small" color="primary" (click)="removeAvatar(mainAvatar)">
+          <ion-icon name="trash-outline"></ion-icon>
+        </ion-button>
+      </div>
+  
+      <div class="avatar-gallery">
+        <div class="avatar-slide" *ngFor="let avatar of user.avatar">
+          <ng-container *ngIf="!isDefaultAvatar(avatar)">
+            <img [src]="sanitizeUrl(avatar)" class="profile-avatar-small" alt="Avatar Option">
+            <div class="avatar-actions">
+              <ion-button *ngIf="myProfile && mainAvatar !== avatar" size="small" color="primary" (click)="changeMainAvatar(avatar)">
+                <ion-icon name="checkmark-outline"></ion-icon>
+              </ion-button>
+              <ion-button *ngIf="myProfile" size="small" color="danger" (click)="removeAvatar(avatar)">
+                <ion-icon name="trash-outline"></ion-icon>
+              </ion-button>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div> <!-- Closing the profile-header div -->
+
+    <div class="user-info">
+      <h1>{{ user.fullName }}<span *ngIf="user.getAge(myProfile) !== null">, {{ user.getAge(myProfile) }}</span></h1>
+      <p>{{ user.country }}, {{ user.city }}</p>
+    </div>
+
+    <ion-fab *ngIf="myProfile" horizontal="end" vertical="bottom">
+      <ion-fab-button color="primary" (click)="selectPictures()">
+        <ion-icon name="add-outline"></ion-icon>
+      </ion-fab-button>
+      <ion-fab-list side="top">
+        <ion-fab-button (click)="selectPictures()">
+          <ion-icon name="images-outline"></ion-icon>
+        </ion-fab-button>
+        <ion-fab-button (click)="takePicture()">
+          <ion-icon name="camera-outline"></ion-icon>
+        </ion-fab-button>
+      </ion-fab-list>
+    </ion-fab>
+
+    <ion-fab [routerLink]="['/messages/chat/', user.id]" *ngIf="!myProfile" horizontal="end" vertical="bottom">
+      <ion-fab-button color="secondary">
+        <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+
+    <ion-card class="profile-card">
+      <ion-card-content>
+        <ion-list>
+          <ion-item>
+            <ion-icon name="transgender-outline" slot="start"></ion-icon>
+            <ion-label>Gender</ion-label>
+            <ion-text>{{ user.gender }}</ion-text>
+          </ion-item>
+          <ion-item>
+            <ion-icon name="school-outline" slot="start"></ion-icon>
+            <ion-label>School</ion-label>
+            <ion-text>{{ user.school }}</ion-text>
+          </ion-item>
+          <ion-item>
+            <ion-icon name="book-outline" slot="start"></ion-icon>
+            <ion-label>Education</ion-label>
+            <ion-text>{{ user.education }}</ion-text>
+          </ion-item>
+          <ion-item>
+            <ion-icon name="briefcase-outline" slot="start"></ion-icon>
+            <ion-label>Profession</ion-label>
+            <ion-text>{{ user.profession }}</ion-text>
+          </ion-item>
+          <ion-item>
+            <ion-icon name="heart-outline" slot="start"></ion-icon>
+            <ion-label>Interests</ion-label>
+            <ion-text>{{ user.interests.length > 0 ? user.interests.join(', ') : 'No Interests' }}</ion-text>
+          </ion-item>
+          <ion-item>
+            <ion-icon name="information-circle-outline" slot="start"></ion-icon>
+            <ion-label>About Me</ion-label>
+            <ion-text>{{ user.aboutMe }}</ion-text>
+          </ion-item>
+        </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <div class="no-profile" *ngIf="!user && !pageLoading">
+    <img src="./../../../../assets/images/svgs/not-found.svg" alt="">
+    <p>This profile is unavailable</p>
+  </div>
+</ion-content>

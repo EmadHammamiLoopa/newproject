@@ -1,0 +1,71 @@
+<app-header
+  [title]="service ? service.title : ''"
+  [back]="true"
+>
+  <div id="end-buttons">
+    <ion-button
+      shape="round"
+      *ngIf="service && user && service.user.id != user.id"
+      (click)="presentPopover($event)"
+    >
+      <i class="fas fa-ellipsis-v"></i>
+    </ion-button>
+  </div></app-header>
+
+<app-loader *ngIf="pageLoading"></app-loader>
+
+<ion-content>
+    <div *ngIf="service">
+      <div class="position-relative">
+        <div class="w-100 image-container">
+          <img [src]="service.photo" class="w-100 service-image" alt="">
+        </div>
+        <ion-fab horizontal="end" vertical="bottom" class="mt-5" *ngIf="service.user.id == user.id">
+          <ion-fab-button (click)="removeConfirmation()" color="danger">
+              <ion-icon name="trash"></ion-icon>
+          </ion-fab-button>
+        </ion-fab>
+      </div>
+      <ion-item>
+        <ion-label class="ml-2">
+          <span class="service-title font-weight-bold d-block">{{ service.title }} </span>
+          <span class="">{{ service.company }}</span>
+        </ion-label>
+        <span>{{ service.createdAt | extractDiffTime }}</span>
+      </ion-item>
+      <ion-item>
+        <ion-label class="ml-2">
+          <span class="font-weight-bold d-block">Location</span>
+          <span class="d-block">{{ service.country }}, {{ service.city }}</span>
+        </ion-label>
+      </ion-item>
+      <ion-item>
+        <ion-label class="ml-2">
+          <span class="font-weight-bold d-block">Phone number</span>
+          <span class="d-block">{{ service.phone }}</span>
+        </ion-label>
+      </ion-item>
+      <ion-item>
+        <ion-label class="ml-2" text-wrap>
+          <span class="service-title font-weight-bold d-block">Description</span>
+          <span>{{ service.description }}</span>
+        </ion-label>
+      </ion-item>
+    </div>
+</ion-content>
+
+<ion-footer>
+  <ion-item>
+    <div class="w-100 pl-1">
+      <ion-button
+        expand="block"
+        size="default"
+        color="secondary"
+        (click)="call()"
+        *ngIf="service && user && service.user.id != user.id"
+      >
+        Call
+      </ion-button>
+    </div>
+  </ion-item>
+</ion-footer>

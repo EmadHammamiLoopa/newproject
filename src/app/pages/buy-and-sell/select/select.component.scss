@@ -1,0 +1,26 @@
+.chip{
+  height: 100px;
+  width: 100%;
+  background-color: #ddd;
+  opacity: 0.8;
+}
+.chip>ion-label>span{
+  font-size: 25px;
+}
+.im{
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--ion-color-primary);
+}
+.image{
+  opacity: 0.5;
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  max-height: 100%;
+}
+.content{
+  position: absolute;
+  top: 0;
+  left: 0;
+}

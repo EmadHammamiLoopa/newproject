@@ -1,0 +1,121 @@
+<app-header
+  [title]="user?.fullName || ''"
+  [back]="true"
+  [avatar]="!!user"
+  [avatarSrc]="user?.getMainAvatar() || null"
+  [reverseColors]="true"
+  (titleClicked)="showUserProfile()"
+>
+  <div id="end-buttons" *ngIf="!business">
+    <ion-buttons slot="end">
+      <ion-button [routerLink]="['/messages/video', user?.id]" shape="round">
+        <i class="fas fa-video"></i>
+      </ion-button>
+    </ion-buttons>
+  </div>
+</app-header>
+
+<app-loader *ngIf="pageLoading"></app-loader>
+
+<!-- Display product details if the chat is related to a product -->
+<ion-card *ngIf="product">
+  <ion-row>
+    <ion-col size="4">
+      <img [src]="product?.photos[0]?.path" alt="Product Image" />
+    </ion-col>
+    <ion-col size="8">
+      <ion-card-header>
+        <ion-card-title>{{ product?.label }}</ion-card-title>
+        <ion-card-subtitle>{{ product?.price | currency:product?.currency }}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        {{ product?.description }}
+      </ion-card-content>
+    </ion-col>
+  </ion-row>
+</ion-card>
+
+<ion-content #content>
+  <ion-infinite-scroll #infScroll position="top" (ionInfinite)="getMessages($event)">
+    <ion-infinite-scroll-content
+      loadingSpinner="crescent"
+      loadingText="Loading more messages ...">
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
+
+  <ion-list *ngIf="authUser && user">
+    <div *ngFor="let message of messages; let ind = index" class="my-2">
+
+      <ion-row size="12" class="w-100 text-center mb-2" *ngIf="allowToShowDate(ind)">
+        <ion-col>{{ message?.createdAt | extractDate }}</ion-col>
+      </ion-row>
+
+      <ion-item lines="none" class="message">
+        <ion-row class="mx-2 w-100">
+          <ion-col
+            [class]="[message?.isMine(authUser?.id) ? 'my-message' : 'his-message']"
+            [class.failed]="message?.state === 'failed'"
+            class="p-2"
+            size="auto"
+          >
+            <div class="w-100 position-relative">
+              <img class="image" *ngIf="message?.image" [src]="message?.image" alt="">
+              <div [class.absolute]="!message?.text && message?.image" class="w-100 text-wrap">
+                <ion-text class="d-block">
+                  {{ message?.text }}
+                  <small class="pt-2 ml-2 float-right">
+                    <span>{{ message?.createdAt | extractTime }}</span>
+                    <span *ngIf="message?.state === ''"><i class="far fa-clock ml-2"></i></span>
+                    <span *ngIf="message?.state === 'sent'"><i class="fas fa-check ml-2"></i></span>
+                  </small>
+                </ion-text>
+              </div>
+            </div>
+          </ion-col>
+        </ion-row>
+        <ion-button
+          color="dark"
+          fill="clear"
+          shape="round"
+          [disabled]="resend.includes(message?.id)"
+          *ngIf="message?.state === 'failed'"
+          (click)="resendMessage(message)"
+        >
+          <span *ngIf="resend.includes(message?.id)"><i class="fas fa-circle-notch fa-spin"></i></span>
+          <span *ngIf="!resend.includes(message?.id)"><i class="fas fa-sync-alt"></i></span>
+        </ion-button>
+      </ion-item>
+    </div>
+    <div class="w-100 text-center text-danger px-4" *ngIf="messages && !conversationStarted()">
+      You can't send more messages until '{{ user?.fullName }}' responded
+    </div>
+    <div class="w-100 text-center text-danger px-4 mt-3" *ngIf="user && messages && !nonFriendsChatEnabled()">
+      You have reached the limit messages for non-friends, you should be a friend of {{ user?.firstName }} to continue chatting with {{ user?.gender === 'male' ? 'him' : 'her' }}
+    </div>
+  </ion-list>
+</ion-content>
+
+<ion-footer class="bg-danger ion-no-padding ion-no-margin">
+  <ion-item lines="none">
+    <ion-buttons class="ion-no-margin" slot="start">
+      <ion-button (click)="pickImage()" size="large" shape="round">
+        <i class="fas fa-camera"></i>
+      </ion-button>
+    </ion-buttons>
+
+    <ion-input
+      (keydown.enter)="addMessage()"
+      (ionFocus)="scrollToBottom()"
+      [(ngModel)]="messageText"
+      [disabled]="!conversationStarted() || !nonFriendsChatEnabled()"
+      class="mx-2 chat-input"
+      placeholder="Type your message here"
+    ></ion-input>
+
+    <ion-buttons class="ion-no-margin py-2" slot="end">
+      <ion-button (click)="addMessage()" shape="round" fill="clear" color="secondary">
+        <ion-icon name="send-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-item>
+</ion-footer>

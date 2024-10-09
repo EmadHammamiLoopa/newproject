@@ -1,0 +1,66 @@
+.my-message {
+  background-color: var(--ion-color-primary);
+  color: rgb(250, 249, 249);
+  margin-left: auto !important;
+}
+.his-message {
+  background-color: var(--ion-color-light);
+  border: 1px solid rgb(73, 72, 72);
+}
+.chat-input {
+  height: 40px !important; /* Slightly increase the height for better usability */
+  padding-left: 12px !important; /* Increase padding for better spacing */
+  padding-right: 12px !important; /* Increase padding for better spacing */
+  border-radius: 20px; /* Add border radius for a rounded appearance */
+  background-color: lightgrey; /* Change background color to light gray */
+  border: 1px solid #dcdcdc; /* Add a subtle border for better contrast */
+  font-size: 16px; /* Adjust font size for better readability */
+  color: #333; /* Change text color for better contrast */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Add subtle shadow for depth */
+}
+
+.his-message, .my-message {
+  border-radius: 12px;
+}
+.text-wrap {
+  word-wrap: break-word;
+  width: 100%;
+  overflow-wrap: break-word;
+}
+.infinite-loading {
+  margin-bottom: 0px !important;
+}
+.failed {
+  background-color: var(--ion-color-danger);
+}
+.image {
+  border-radius: 12px;
+}
+.absolute {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  z-index: 100;
+  padding: 5px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+}
+
+/* Added CSS for product image */
+.product-card {
+  margin: 10px;
+}
+
+.product-image {
+  max-width: 100%; /* Adjust the size as needed */
+  max-height: 300px; /* Adjust the size as needed */
+  display: block;
+  margin: 0 auto;
+  margin-left: 0%;
+}

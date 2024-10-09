@@ -1,0 +1,66 @@
+.photo-container {
+  position: relative;
+  width: 100%; /* The size you want */
+}
+
+.photo-container:after {
+  content: "";
+  display: block;
+  padding-bottom: 100%; /* The padding depends on the width, not on the height, so with a padding-bottom of 100% you will get a square */
+}
+
+.photo-container img  {
+  position: absolute; /* Take your picture out of the flow */
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0; /* Make the picture taking the size of it's parent */
+  width: 100%; /* This if for the object-fit */
+  height: 100%; /* This if for the object-fit */
+  object-fit: cover; /* Equivalent of the background-size: cover; of a background-image */
+  object-position: center;
+  border-radius: 50%;
+  border: 1px solid #bbb;
+}
+
+.photo-container:hover{
+  filter: brightness(80%);
+}
+
+.info-container{
+  position: absolute;
+  bottom: 0px;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: white;
+}
+
+.online-icon{
+  font-size: 10px;
+}
+
+.tab-button.selected{
+  border-bottom:2px solid var(--ion-color-primary)!important;
+}
+.divider-label {
+  font-weight: bold;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  margin: 20px 0;
+  color: #3880ff; /* Adjust color as needed */
+}
+
+.user-status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.user-online {
+  background-color: green;
+}
+
+.user-offline {
+  background-color: grey;
+}

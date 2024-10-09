@@ -1,0 +1,9 @@
+.tab-button{
+  --border-radius: 0px;
+  font-size: 14px;
+  height: 45px;
+}
+.tab-button.selected{
+  --ion-color-base: #fff!important;
+  --ion-color-contrast: #000!important;
+}

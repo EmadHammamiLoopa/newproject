@@ -1,0 +1,35 @@
+<app-header
+  title="Search Options"
+  [back]="true"
+  [modal]="true"
+>
+</app-header>
+
+<ion-content>
+  <ion-list>
+    <ion-item class="px-2">
+      <ion-label>Gender</ion-label>
+      <ion-select [(ngModel)]="gender">
+        <ion-select-option value="female">Female</ion-select-option>
+        <ion-select-option value="male">Male</ion-select-option>
+        <ion-select-option value="both">Both</ion-select-option>
+      </ion-select>
+    </ion-item>
+    
+    <ion-item class="px-2" *ngFor="let item of checkItemsNames">
+      <ion-label>{{ item }}</ion-label>
+      <ion-toggle [(ngModel)]="checkItems[item]" color="primary"></ion-toggle>
+    </ion-item>
+  </ion-list>
+</ion-content>
+
+<ion-footer>
+  <ion-button
+    color="primary"
+    expand="block"
+    class="mx-4 my-2"
+    (click)="submit()"
+  >
+    <i class="fas fa-search mr-2"></i>Search
+  </ion-button>
+</ion-footer>

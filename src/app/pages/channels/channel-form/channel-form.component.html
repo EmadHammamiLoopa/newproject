@@ -1,0 +1,80 @@
+<app-header title="New Channel" [back]="true"></app-header>
+
+<ion-content>
+  <app-loader *ngIf="pageLoading"></app-loader>
+  <div *ngIf="!pageLoading">
+    <div (click)="pickImage()" class="w-100 image-container">
+      <div *ngIf="!channelImage.url" class="w-100 h-100 bg-light d-flex justify-content-center align-items-center">
+        <span *ngIf="!imageLoading" class="text-center">
+          <span class="d-block camera">
+            <i class="fas fa-camera"></i>
+          </span>
+          <span class="d-block">Select an image</span>
+        </span>
+        <span *ngIf="imageLoading" class="text-center">
+          <span class="d-block camera">
+            <i class="fas fa-spinner fa-spin"></i>
+          </span>
+          <span class="d-block">Importing picture...</span>
+        </span>
+      </div>
+      <img *ngIf="channelImage.url" [src]="channelImage.url" class="w-100" alt="">
+    </div>
+    <form [formGroup]="form">
+      <ion-list class="mx-3">
+        <ion-item>
+          <ion-input formControlName="name" class="ml-2" placeholder="Channel name"></ion-input>
+        </ion-item>
+        <span *ngIf="validatorErrors['name'] || (name.dirty && name.errors)">
+          <span class="text-danger" *ngIf="validatorErrors['name']">{{ validatorErrors['name'][0] }}</span>
+          <span class="text-danger" *ngIf="name.hasError('required')">The name field is required</span>
+          <span class="text-danger" *ngIf="name.hasError('maxlength')">
+            The name must not contain more than {{ name.errors.maxlength.requiredLength }} characters
+          </span>
+        </span>
+
+        <ion-item>
+          <ion-textarea maxlength="255" formControlName="description" class="ml-2" rows="5" placeholder="Description"></ion-textarea>
+        </ion-item>
+        <span *ngIf="validatorErrors['description'] || (description.dirty && description.errors)" class="mt-1">
+          <span class="text-danger" *ngIf="validatorErrors['description']">{{ validatorErrors['description'][0] }}</span>
+          <span class="text-danger" *ngIf="description.hasError('required')">The description field is required</span>
+          <span class="text-danger" *ngIf="description.hasError('maxlength')">
+            The description must not contain more than {{ description.errors.maxlength.requiredLength }} characters
+          </span>
+        </span>
+
+        <ion-item>
+          <ion-input formControlName="category" class="ml-2" placeholder="Category"></ion-input>
+        </ion-item>
+        <span *ngIf="validatorErrors['category'] || (category.dirty && category.errors)">
+          <span class="text-danger" *ngIf="validatorErrors['category']">{{ validatorErrors['category'][0] }}</span>
+          <span class="text-danger" *ngIf="category.hasError('required')">The category field is required</span>
+        </span>
+      </ion-list>
+    </form>
+  </div>
+  <ion-item>
+    <ion-button expand="block" size="default" color="primary" (click)="presentTermsModal()">
+      View and Accept Terms and Conditions
+    </ion-button>
+  </ion-item>
+  <ion-item *ngIf="termsAccepted">
+    <ion-label color="success">You have accepted the terms and conditions.</ion-label>
+  </ion-item>
+</ion-content>
+<ion-footer>
+  <ion-item>
+    <div class="w-100 px-3">
+      <ion-button
+        expand="block"
+        size="default"
+        color="primary"
+        (click)="submit()"
+        [disabled]="!form.valid || !termsAccepted || !channelImage.file"
+      >
+        Post
+      </ion-button>
+    </div>
+  </ion-item>
+</ion-footer>

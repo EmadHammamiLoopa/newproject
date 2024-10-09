@@ -1,0 +1,36 @@
+.time{
+  position: relative;
+  font-size: 11px;
+}
+.category-container {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  width: 100%;
+}
+
+.category-slides {
+  display: flex;
+  overflow: hidden;
+}
+
+ion-slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+ion-chip {
+  margin: 0 8px; /* Adjust spacing between chips */
+  min-width: 120px; /* Minimum width to ensure text fits */
+  max-width: 200px; /* Prevent excessive stretching */
+  box-sizing: border-box; /* Ensure padding/border is included in width */
+}
+
+ion-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* Prevent text from wrapping */
+  display: inline-block; /* Ensure text fits within chip */
+}

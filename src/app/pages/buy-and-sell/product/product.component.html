@@ -1,0 +1,149 @@
+<app-header [title]="product ? product.label : ''" [back]="true">
+  <div id="end-buttons">
+    <ion-button
+      shape="round"
+      *ngIf="product && user && isBuyer"
+      (click)="presentPopover($event)"
+      color="secondary"
+      class="custom-button"
+    >
+      <i class="fas fa-ellipsis-v"></i>
+    </ion-button>
+  </div>
+</app-header>
+
+<app-loader *ngIf="pageLoading" color="primary"></app-loader>
+
+<ion-content *ngIf="!pageLoading">
+  <ion-refresher slot="fixed" pullFactor="0.5" pullMin="100" pullMax="200" (ionRefresh)="getProduct($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div *ngIf="product" class="product-details">
+    <ion-item lines="none" detail="false">
+      <ion-label class="ml-2">
+        <span class="product-title font-weight-bold">
+          <a class="poster-link" (click)="goToPosterProfile()">
+            By: {{ poster?.firstName }} {{ poster?.lastName }}
+          </a>
+        </span>
+      </ion-label>
+    </ion-item>
+
+    <ion-slides pager="true">
+      <ion-slide *ngFor="let photo of product.photos">
+        <img [src]="photo.path" class="product-image" alt="Product Image">
+      </ion-slide>
+    </ion-slides>
+    <ion-fab horizontal="end" vertical="bottom" class="mt-5" *ngIf="isSeller">
+      <ion-fab-button (click)="removeConfirmation()" color="danger">
+        <ion-icon name="trash"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+
+    <ion-item>
+      <ion-label class="ml-2">
+        <span class="product-title font-weight-bold d-block">{{ product.label }} </span>
+        <span class="product-price">{{ product.price }} {{ product.currency }}</span>
+      </ion-label>
+    </ion-item>
+
+    <ion-item>
+      <ion-label class="ml-2">
+        <span class="product-title font-weight-bold d-block">Category</span>
+        <span class="product-price">{{ product.category }}</span>
+      </ion-label>
+    </ion-item>
+
+    <ion-item>
+      <ion-label class="ml-2">
+        <span class="product-title font-weight-bold d-block">Location </span>
+        <span class="product-location">{{ product.country }} {{ product.city }}</span>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label class="ml-2">
+        <span class="product-title font-weight-bold d-block">Brand</span>
+        <span class="product-brand">{{ product.brand }}</span>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label class="ml-2">
+        <span class="product-title font-weight-bold d-block">Condition</span>
+        <span class="product-condition">{{ product.condition }}</span>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label class="ml-2">
+        <span class="product-title font-weight-bold d-block">Weight</span>
+        <span class="product-weight">{{ product.weight }}</span>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label class="ml-2">
+        <span class="product-title font-weight-bold d-block">Dimensions</span>
+        <span class="product-dimensions">
+          Length: {{ product.dimensions.length }} cm, 
+          Width: {{ product.dimensions.width }} cm, 
+          Height: {{ product.dimensions.height }} cm
+        </span>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label class="ml-2">
+        <span class="product-title font-weight-bold d-block">Tags</span>
+        <span class="product-tags">{{ product.tags.join(', ') }}</span>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label class="ml-2" text-wrap>
+        <span class="product-title font-weight-bold d-block">Description</span>
+        <span class="product-description">{{ product.description }}</span>
+      </ion-label>
+    </ion-item>
+  </div>
+</ion-content>
+
+<ion-footer class="px-3" *ngIf="product">
+  <ion-button
+  expand="block"
+  size="default"
+  color="primary"
+  *ngIf="isBuyer"
+  [routerLink]="['/messages/chat/', product.user]"
+  [queryParams]="{ productId: product.id }"
+  class="chat-button"
+>
+  Chat with Seller
+</ion-button>
+
+  <ng-container *ngIf="isSeller && !product.sold">
+    <ion-button
+      expand="block"
+      size="default"
+      color="success"
+      (click)="markAsSold()"
+      class="mark-sold-button"
+    >
+      Mark as Sold
+    </ion-button>
+    <ion-button
+      expand="block"
+      size="default"
+      color="warning"
+      [routerLink]="['/edit-product/' + product.id]"
+      class="edit-button"
+    >
+      Edit Product
+    </ion-button>
+    <ion-button
+      expand="block"
+      size="default"
+      color="danger"
+      (click)="removeConfirmation()"
+      class="delete-button"
+    >
+      Delete Product
+    </ion-button>
+  </ng-container>
+</ion-footer>

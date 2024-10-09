@@ -1,0 +1,73 @@
+<app-loader *ngIf="pageLoading"></app-loader>
+
+<ion-content color="dark" *ngIf="user">
+  <video
+    id="partner-video"
+    (click)="swapVideo('my-video')"
+    autoplay
+    playsinline
+    [ngClass]="{'second-video': topVideoFrame === 'partner-video', 'main-video': topVideoFrame != 'partner-video'}"
+    [class.d-none]="!answered"
+  ></video>
+
+  <video
+    id="my-video"
+    (click)="swapVideo('partner-video')"
+    autoplay
+    playsinline
+    [muted]="true"
+    [ngClass]="{'second-video': topVideoFrame === 'my-video', 'main-video': topVideoFrame != 'my-video'}"
+  ></video>
+
+  <div class="call-info pb-3" *ngIf="!answered">
+    <div>
+      <div class="w-100 mt-3 d-flex justify-content-center">
+        <ion-avatar>
+          <img [src]="partner?.avatar" alt="">
+        </ion-avatar>
+      </div>
+      <div class="w-100 text-center mt-2">
+        <span class="d-block user-name">{{ partner?.fullName }}</span>
+        <span class="d-block">Calling ...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="buttons-div w-100 mb-3">
+    <ion-row class="mb-4">
+      <ion-col [size]="answer && !answered ? '6' : '12'" class="d-flex justify-content-center">
+        <ion-fab-button [disabled]="!myEl || !myEl.srcObject" (click)="closeCall()" color="danger">
+          <i class="fas fa-phone-slash"></i>
+        </ion-fab-button>
+      </ion-col>
+      
+      <ion-col *ngIf="answer && !answered" size="6" class="d-flex justify-content-center">
+        <ion-fab-button (click)="answerCall()" color="success">
+          <i class="fas fa-phone"></i>
+        </ion-fab-button>
+      </ion-col>
+    </ion-row>
+    <ion-row *ngIf="answered || !answer">
+      <ion-col size="6" class="d-flex justify-content-center">
+        <ion-fab-button (click)="toggleAudio()" [color]="audioEnabled ? 'light' : 'danger'">
+          <span *ngIf="audioEnabled">
+            <i class="fas fa-microphone"></i>
+          </span>
+          <span *ngIf="!audioEnabled">
+            <i class="fas fa-microphone-slash"></i>
+          </span>
+        </ion-fab-button>
+      </ion-col>
+      <ion-col size="6" class="d-flex justify-content-center">
+        <ion-fab-button (click)="toggleCamera()" [color]="cameraEnabled ? 'light' : 'danger'">
+          <span *ngIf="cameraEnabled">
+            <i class="fas fa-video"></i>
+          </span>
+          <span *ngIf="!cameraEnabled">
+            <i class="fas fa-video-slash"></i>
+          </span>
+        </ion-fab-button>
+      </ion-col>
+    </ion-row>
+  </div>
+</ion-content>

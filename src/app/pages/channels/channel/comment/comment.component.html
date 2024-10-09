@@ -1,0 +1,88 @@
+<div
+  [style]="{'--background': backgroundColor, 'color': color, 'border-color': color}"
+  class="m-1 px-2 my-2 border-bottom"
+>
+  <div class="d-flex justify-content-between">
+    <div [style]="{'--color': color}">
+      <span (click)="!comment.anonyme && showUserProfile(comment.user.id)">
+        <span class="mr-1" *ngIf="comment.anonyme"><i class="fas fa-user-secret"></i></span>
+        <span class="mr-1" *ngIf="!comment.anonyme"><i class="fas fa-user"></i></span>
+        {{ commentUserName(comment) }}
+      </span>
+
+      <small class="date">{{ comment.createdAt | extractDiffTime }}</small>
+      <div class="pl-2 pr-2 py-2">
+        <span>{{ comment.text }}</span>
+      </div>
+
+      <!-- Only show media if it exists -->
+      <div *ngIf="mediaUrl" class="media-section mt-2">
+        <div class="media-container" (click)="toggleImageSize()">
+          <img [src]="mediaUrl" alt="comment media" class="comment-media-img" [ngClass]="{'enlarged': isImageEnlarged}"/>
+
+          <!-- Expiration circular progress bar on top-right of image -->
+          <div *ngIf="comment.media.expiryDate" class="expiry-circle-wrapper">
+            <div class="expiry-circle">
+              <svg class="circle-svg">
+                <!-- Background circle -->
+                <circle cx="50%" cy="50%" r="45%"></circle>
+                <!-- Dynamic progress circle with color changes -->
+                <circle class="circle-progress" cx="50%" cy="50%" r="45%" 
+                  [attr.style]="getExpirationProgress(comment.media.expiryDate.toISOString())" 
+                  [attr.stroke]="getCircleColor(comment.media.expiryDate.toISOString())">
+                </circle>
+              </svg>
+              <!-- Time remaining inside the circle -->
+              <div class="circle-text">
+                {{ getTimeRemaining(comment.media.expiryDate.toISOString()) }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pr-2">
+      <ion-button
+        shape="round"
+        class="d-block ion-no-margin ion-no-padding"
+        [style]="{'--color': color}"
+        fill="clear"
+        size="small"
+        (click)="presentPopover($event)"
+      >
+        <i class="fas fa-ellipsis-v"></i>
+      </ion-button>
+      <ion-button
+        shape="round"
+        class="d-block ion-no-margin ion-no-padding px-1"
+        [style]="{'--color': color}"
+        fill="clear"
+        size="small"
+        (click)="voteOnComment(1)"
+      >
+        <i class="fas fa-chevron-up"></i>
+      </ion-button>
+      <ion-button
+        shape="round"
+        class="d-block ion-no-margin ion-no-padding px-1"
+        [style]="{'--color': color}"
+        fill="clear"
+        size="small"
+        disabled
+      >
+        <span class="font-weight-bold">{{ comment.votes }}</span>
+      </ion-button>
+      <ion-button
+        shape="round"
+        class="d-block ion-no-margin ion-no-padding px-1"
+        [style]="{'--color': color}"
+        fill="clear"
+        size="small"
+        (click)="voteOnComment(-1)"
+      >
+        <i class="fas fa-chevron-down"></i>
+      </ion-button>
+    </div>
+  </div>
+</div>
