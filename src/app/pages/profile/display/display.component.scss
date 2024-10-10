@@ -1,7 +1,7 @@
 /* Profile Content */
 .profile-content {
   --ion-background-color: #f4f5f8; /* Light gray background */
-  padding: 20px;
+  padding: 20px; /* Reduced padding for better readability */
 }
 
 /* Profile Header */
@@ -16,19 +16,124 @@
 .main-avatar {
   position: relative;
 }
-.main-avatar img {
-  border-radius: 50%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow for the avatar */
-}
+
 .profile-avatar-big {
   @apply w-64 h-64 rounded-full object-cover;
 }
 
+/* Interests List - Display inline */
+/* Interests List - Display inline */
+.interests-list {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping to the next line */
+  gap: 6px; /* Space between interests */
+  margin-top: 10px;
+}
+
+/* Interest Item - Badge Style */
+.interest-item {
+  background-color: #e3f2fd; /* Light blue background for each interest */
+  color: #1565c0; /* Darker blue text */
+  padding: 8px 16px; /* Padding for a more substantial appearance */
+  border-radius: 20px; /* Rounded corners for a tag-like appearance */
+  font-size: 14px; /* Slightly smaller text for compact look */
+  font-weight: 500; /* Medium weight for visibility */
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+  transition: transform 0.3s, background-color 0.3s; /* Add smooth transition effects */
+  cursor: pointer; /* Change cursor to pointer for interactivity */
+}
+
+/* Ensure the FAB button is positioned near the avatar */
+.fab-avatar {
+  position: absolute;
+  top: 0;
+  right: 10px;
+  transform: translateY(50%);
+  margin-top: 30px;
+}
+
+
+/* On hover, scale up slightly and add more shadow */
+/* Corrected FAB button */
+.fab-avatar ion-fab-button {
+  --width: 40px;
+  --height: 40px;
+  --border-radius: 50%; /* Ensure the button is circular */
+  box-shadow: 0 2px 6px rgb(255, 255, 255); /* Subtle shadow */
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+
+/* Adjust the size of the FAB buttons in the list */
+.fab-avatar ion-fab-list ion-fab-button {
+  --width: 25px;
+  --height: 25px;
+  --border-radius: 50%;
+}
+
+/* Smooth animation for the FAB list buttons when opened */
+.fab-avatar ion-fab-list ion-fab-button {
+  transition: transform 0.3s ease-in-out;
+}
+
+.fab-avatar ion-fab-list ion-fab-button:hover {
+  transform: scale(1.05); /* Slight zoom effect on hover */
+}
+
+
+
+/* Interest Item Hover Effect */
+.interest-item:hover {
+  background-color: #bbdefb; /* Slightly darker blue on hover */
+  transform: scale(1.05); /* Slight zoom on hover */
+}
+
+/* Alternative Colors for Different Interests */
+.interest-item:nth-child(2n) {
+  background-color: #ffebee; /* Light red for variety */
+  color: #23898e;
+}
+
+.interest-item:nth-child(3n) {
+  background-color: #e8f5e9; /* Light green */
+  color: #2e7d32;
+}
+
+
+  /* Main Avatar */
+  .main-avatar {
+    position: relative;
+  }
+  .main-avatar img {
+    border-radius: 50%;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2); /* Softer shadow for the avatar */
+    border: 3px solid #ffffff; /* White border to make it stand out */
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  
 /* Avatar Gallery */
 .avatar-gallery {
-  display: flex;
-  justify-content: center;
-  gap: 10px; /* Consistent gap between avatars */
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2); /* Softer shadow for the avatar */
+  border: 3px solid #ffffff; /* White border to make it stand out */
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+  animation: pulse 2s infinite;
 }
 
 .avatar-slide {
@@ -47,14 +152,31 @@
 /* Avatar Actions */
 .avatar-actions {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 10px;  /* Adjust the position slightly lower */
+  width: 100%; /* Stretch actions to full width */
   display: flex;
-  gap: 5px;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background for buttons */
-  border-radius: 5px;
-  padding: 2px;
+  justify-content: space-between; /* Align one button to the left and one to the right */
+  padding: 4 10px; /* Add padding on the left and right for spacing */
 }
+
+.avatar-actions ion-button {
+  --background: #fff; /* White background for better contrast */
+  --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* Subtle shadow to lift buttons off the image */
+  --border-radius: 50%; /* Circular buttons */
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center; /* Center icon inside the button */
+  justify-content: center;
+}
+/* Specific adjustments for icons */
+.avatar-actions ion-icon {
+  font-size: 35px;
+  color: #ffffff; /* Consistent color for the icons */
+}
+
+
+/* Small Avatar */
 .profile-avatar-small {
   @apply w-12 h-12 rounded-full object-cover;
 }
@@ -71,6 +193,17 @@
   @apply text-gray-600 text-sm;
 }
 
+.profile-card ion-item:last-child {
+  border-bottom: none; /* Remove border from the last item */
+}
+.profile-card ion-icon {
+  margin-right: 12px; /* Space between icon and text */
+  color: #3498db; /* Blue color for the icons */
+}
+.interest-item:nth-child(3n) {
+  background-color: #e8f5e9; /* Light green */
+  color: #2e7d32;
+}
 /* Profile Card */
 .profile-card {
   margin-top: 20px;
@@ -94,12 +227,38 @@
 /* Custom Button Styles */
 .icon-button {
   --background: #ffffff;
-  --color: #007bff; /* Custom primary color */
-  --ion-button-hover-background: #007bff;
+  --color: #ffffff; /* Custom primary color */
+  --ion-button-hover-background: #ffffff;
   --ion-button-hover-color: #ffffff;
   border-radius: 50px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* Subtle shadow */
 }
+
+.fab-avatar {
+  position: absolute;
+  top: 0;
+  right: 10px;
+  transform: translateY(50%);
+  margin-top: 30px;
+}
+
+.fab-avatar ion-fab-button {
+  --width: 40px;
+  --height: 40px;
+  --border-radius: 50%; /* Ensure the button is circular */
+  box-shadow: 0 2px 6px rgb(255, 255, 255); /* Subtle shadow */
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.fab-avatar ion-fab-list ion-fab-button {
+  --width: 25px;
+  --height: 25px;
+  --border-radius: 50%;
+}
+
+.fab-avatar ion-fab-list ion-fab-button:hover {
+  transform: scale(1.05); /* Slight zoom effect on hover */
+}
+
 
 /* TailwindCSS Classes */
 @apply bg-gray-100 text-gray-800; /* Global background and text color */

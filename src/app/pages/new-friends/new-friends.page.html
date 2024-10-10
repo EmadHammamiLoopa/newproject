@@ -61,10 +61,10 @@
           <ion-item lines="none" class="text-center">
             <ion-label color="primary" class="divider-label">
               <ng-container *ngIf="!isGlobalSearch">
-                Discover more friends from {{ authUser.country }}! 🌍
+              <h2>  Discover more friends from {{ authUser.country }}! 🌍</h2>
               </ng-container>
               <ng-container *ngIf="isGlobalSearch">
-                We couldn't find users in your country. Explore friends around the world! 🌍
+                <h2>We couldn't find users in your country. Explore friends around the world! 🌍</h2>
               </ng-container>
             </ion-label>
           </ion-item>

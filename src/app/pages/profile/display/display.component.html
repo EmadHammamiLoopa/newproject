@@ -39,27 +39,30 @@
 
   <div *ngIf="user && !pageLoading">
     <div class="profile-header">
-      <div class="main-avatar">
-        <img [src]="user?.getMainAvatar() || './assets/images/default-avatar.png'" class="profile-avatar-big" alt="Main Avatar">
-        <ion-button *ngIf="myProfile && !isDefaultAvatar(mainAvatar)" size="small" color="primary" (click)="removeAvatar(mainAvatar)">
-          <ion-icon name="trash-outline"></ion-icon>
+      <div class="main-avatar" *ngIf="user?.getMainAvatar()">
+        <!-- Display avatar only if it exists -->
+        <img [src]="sanitizeUrl(user?.getMainAvatar())" class="profile-avatar-big" alt="Main Avatar">
+        <ion-button *ngIf="myProfile && !isDefaultAvatar(mainAvatar)" size="small" color="danger" (click)="removeAvatar(mainAvatar)" style="position: absolute; left: -20px; top: 10px;">
+          <ion-icon name="trash-bin-sharp"></ion-icon>
         </ion-button>
       </div>
-  
-      <div class="avatar-gallery">
-        <div class="avatar-slide" *ngFor="let avatar of user.avatar">
-          <ng-container *ngIf="!isDefaultAvatar(avatar)">
-            <img [src]="sanitizeUrl(avatar)" class="profile-avatar-small" alt="Avatar Option">
-            <div class="avatar-actions">
-              <ion-button *ngIf="myProfile && mainAvatar !== avatar" size="small" color="primary" (click)="changeMainAvatar(avatar)">
-                <ion-icon name="checkmark-outline"></ion-icon>
-              </ion-button>
-              <ion-button *ngIf="myProfile" size="small" color="danger" (click)="removeAvatar(avatar)">
-                <ion-icon name="trash-outline"></ion-icon>
-              </ion-button>
-            </div>
-          </ng-container>
-        </div>
+
+      <div class="avatar-gallery" *ngIf="user?.avatar && user.avatar.length > 0">
+        <ion-slides pager="true" [options]="{ freeMode: true, slidesPerView: 'auto', spaceBetween: 10 }">
+          <ion-slide *ngFor="let avatar of user.avatar">
+            <ng-container *ngIf="!isDefaultAvatar(avatar)">
+              <img [src]="sanitizeUrl(avatar)" class="profile-avatar-small" alt="Avatar Option">
+              <div class="avatar-actions">
+                <ion-button *ngIf="myProfile && mainAvatar !== avatar" size="small" color="primary" (click)="changeMainAvatar(avatar)">
+                  <ion-icon name="checkmark-outline"></ion-icon>
+                </ion-button>
+                <ion-button *ngIf="myProfile" size="small" color="danger" (click)="removeAvatar(avatar)">
+                  <ion-icon name="trash-outline"></ion-icon>
+                </ion-button>
+              </div>
+            </ng-container>
+          </ion-slide>
+        </ion-slides>
       </div>
     </div> <!-- Closing the profile-header div -->
 
@@ -68,11 +71,11 @@
       <p>{{ user.country }}, {{ user.city }}</p>
     </div>
 
-    <ion-fab *ngIf="myProfile" horizontal="end" vertical="bottom">
+    <ion-fab *ngIf="myProfile" vertical="center" horizontal="end" slot="fixed" class="fab-avatar">
       <ion-fab-button color="primary" (click)="selectPictures()">
-        <ion-icon name="add-outline"></ion-icon>
+        <ion-icon name="add-circle-outline"></ion-icon>
       </ion-fab-button>
-      <ion-fab-list side="top">
+      <ion-fab-list side="bottom">
         <ion-fab-button (click)="selectPictures()">
           <ion-icon name="images-outline"></ion-icon>
         </ion-fab-button>
@@ -82,15 +85,22 @@
       </ion-fab-list>
     </ion-fab>
 
-    <ion-fab [routerLink]="['/messages/chat/', user.id]" *ngIf="!myProfile" horizontal="end" vertical="bottom">
+    <ion-fab [routerLink]="['/messages/chat/', user.id]" *ngIf="!myProfile" vertical="center" horizontal="end" slot="fixed" class="fab-avatar">
       <ion-fab-button color="secondary">
         <ion-icon name="chatbubble-ellipses-outline"></ion-icon>
       </ion-fab-button>
     </ion-fab>
+    
 
     <ion-card class="profile-card">
       <ion-card-content>
         <ion-list>
+          <ion-item>
+            <ion-icon name="information-circle-outline" slot="start"></ion-icon>
+            <ion-label>About Me</ion-label>
+            <ion-text>{{ user.aboutMe }}</ion-text>
+          </ion-item>
+          
           <ion-item>
             <ion-icon name="transgender-outline" slot="start"></ion-icon>
             <ion-label>Gender</ion-label>
@@ -114,13 +124,14 @@
           <ion-item>
             <ion-icon name="heart-outline" slot="start"></ion-icon>
             <ion-label>Interests</ion-label>
-            <ion-text>{{ user.interests.length > 0 ? user.interests.join(', ') : 'No Interests' }}</ion-text>
           </ion-item>
-          <ion-item>
-            <ion-icon name="information-circle-outline" slot="start"></ion-icon>
-            <ion-label>About Me</ion-label>
-            <ion-text>{{ user.aboutMe }}</ion-text>
+          <ion-item lines="none">
+            <div class="interests-list">
+              <span *ngFor="let interest of user.interests" class="interest-item">{{ interest }}</span>
+            </div>
           </ion-item>
+          
+
         </ion-list>
       </ion-card-content>
     </ion-card>
