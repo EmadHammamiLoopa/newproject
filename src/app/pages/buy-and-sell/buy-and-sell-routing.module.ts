@@ -6,6 +6,7 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 
 import { BuyAndSellPage } from './buy-and-sell.page';
+import { ProductListComponent } from './products/product-list.component';
 
 const routes: Routes = [
   {
@@ -28,6 +29,10 @@ const routes: Routes = [
       {
         path: 'product/form',
         component: ProductFormComponent
+      },
+      {
+        path: 'products/:type/list',
+        component: ProductListComponent // Add the new route
       },
       {
         path: 'product/:id',

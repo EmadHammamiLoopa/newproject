@@ -1,0 +1,29 @@
+<app-header
+  [back]="true"
+  [title]="selectedCategory"
+  [backLink]="'/tabs/buy-and-sell/products/buy'"
+></app-header>
+
+<app-loader *ngIf="pageLoading"></app-loader>
+
+<ion-content>
+  <div *ngIf="!pageLoading && products.length === 0" class="no-products-found">
+    <img src="assets/images/svgs/Notfound.svg" alt="No products found" class="no-products-svg">
+    <p>Sorry, we couldn’t find any products in "{{ selectedCategory }}". Try exploring other categories or broaden your search!</p>
+  </div>
+
+  <ion-row *ngIf="products && products.length > 0" class="product-grid">
+    <ion-col size="6" size-sm="4" size-md="3" *ngFor="let product of products">
+      <ion-card class="product-card" button="true" [routerLink]="['/tabs/buy-and-sell/product', product.id]">
+        <ion-img [src]="getProductImage(product)" class="product-image"></ion-img>
+        <ion-card-content class="product-details">
+          <div class="label-container">
+            <span class="product-label">{{ product.label | resumeText: 6 }}</span>
+            <small class="product-time">{{ product.createdAt | extractDiffTime }} ago</small>
+          </div>
+          <small class="product-price">{{ product.price + ' ' + product.currency }}</small>
+        </ion-card-content>
+      </ion-card>
+    </ion-col>
+  </ion-row>
+</ion-content>

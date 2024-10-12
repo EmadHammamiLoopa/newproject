@@ -90,21 +90,25 @@ export class ProductFormComponent implements OnInit {
       condition: product.condition,
       weight: product.weight,
       dimensions: {
-        length: product.dimensions.length,
-        width: product.dimensions.width,
-        height: product.dimensions.height
+        length: product.dimensions?.length || '',  // Check if dimensions exist
+        width: product.dimensions?.width || '',
+        height: product.dimensions?.height || ''
       },
-      tags: product.tags.join(', ')
+      tags: product.tags?.length ? product.tags.join(', ') : ''  // Fallback if tags are undefined
     });
   
-    this.productImages = product.photos.map(photo => ({
-      url: `http://127.0.0.1:3300/public${photo.path}`, // Add the full URL prefix
-      file: new Blob(), // Set to a new Blob for now, will be updated with correct file when picking images
-      name: photo.path.split('/').pop()
-    }));
+    this.productImages = product.photos?.length
+      ? product.photos.map(photo => ({
+        url: 'http://127.0.0.1:3300/public' + photo.path,
+        file: new Blob(),  // Dummy blob, to be updated with correct file
+          name: photo.path.split('/').pop()
+        }))
+      : [];  // Fallback to an empty array if photos are undefined
   
     this.selectedCurrency = product.currency;
   }
+  
+  
   
 
   get label() {
@@ -361,8 +365,8 @@ submit() {
 
   fetchCategories() {
     this.categoryService.getCategories().subscribe(
-      (data: any) => {
-        this.categories = data;
+      (data: { name: string, icon: string }[]) => {
+        this.categories = data.map(category => category.name); // Map only the names for the select options
       },
       err => {
         console.error('Error fetching categories:', err);
@@ -370,4 +374,5 @@ submit() {
       }
     );
   }
+  
 }

@@ -14,6 +14,7 @@ import { CategoryService } from '../product-form/Categories.service';
 })
 export class ProductsComponent implements OnInit {
   @ViewChild('infinitScroll') infinitScroll: IonInfiniteScroll;
+  filteredProducts: Product[] = []; // Add this line
 
   pageLoading = false;
   products: Product[] = [];
@@ -22,7 +23,7 @@ export class ProductsComponent implements OnInit {
   page: number = 0;
   searchQuery: string = '';
   type: string;
-  categories: string[] = ['All'];
+  categories: { name: string, icon: string }[] = [{ name: 'All', icon: 'globe-outline' }];
   selectedCategory: string = 'All';
 
   slideOpts = {
@@ -42,20 +43,52 @@ export class ProductsComponent implements OnInit {
 
   ngOnInit() {
     this.fetchCategories();
-    this.initializeProducts();
+  
+    // Subscribe to route param changes (e.g., 'type')
+    this.route.paramMap.subscribe(paramMap => {
+      this.type = paramMap.get('type');
+      console.log('Type param:', this.type); // Log type param
+  
+      // Fetch products based on type
+      this.initializeProducts();
+    });
+  
+    // Subscribe to query param changes (e.g., 'category')
+    this.route.queryParams.subscribe(queryParams => {
+      this.selectedCategory = queryParams['category'] || 'All'; // Default to 'All' if no category is provided
+      console.log('Selected Category query param:', this.selectedCategory); // Log selected category
+  
+      // Re-fetch or filter the products based on the new parameters
+      this.filterProductsByCategory();
+    });
   }
-
+  
+  
+  
   ionViewWillEnter() {
+    console.log('ionViewWillEnter triggered'); // Log when ionViewWillEnter is triggered
     this.pageLoading = true;
     this.searchQuery = "";
     this.page = 0;
     this.getPageType();
+    this.initializeProducts();
   }
+  
+  getProductImage(product: Product): string {
+    if (product.photos && product.photos.length > 0) {
+      console.log("imageeeeeeeeeee",product.photos[0].url);
+      return product.photos[0].url; // Return the URL of the first photo
+    } else {
+      return 'assets/imgs/no-image.png'; // Placeholder image if no photos exist
+    }
+  }
+  
 
   showProductForm() {
     this.pageLoading = true;
     this.productService.getStorePermession().then(
       (resp: any) => {
+        console.log('Store permission received. Date:', resp.data.date); // Log the date when store permission is granted
         if (resp.data.date) {
           this.router.navigate(['/tabs/subscription'], {
             queryParams: {
@@ -63,6 +96,7 @@ export class ProductsComponent implements OnInit {
             }
           });
         } else {
+          console.log('Navigating to product form.'); // Log navigation to the product form
           this.router.navigateByUrl('/tabs/buy-and-sell/product/form');
         }
         this.pageLoading = false;
@@ -73,6 +107,7 @@ export class ProductsComponent implements OnInit {
       }
     );
   }
+  
 
   getPageType() {
     this.route.paramMap.subscribe(param => {
@@ -83,10 +118,23 @@ export class ProductsComponent implements OnInit {
   }
 
   search(val: string) {
-    this.searchQuery = val;
-    this.page = 0;
-    this.getProducts(null);
+    this.searchQuery = val ? val.trim() : ''; // Ensure search query is trimmed and not null
+    
+    if (this.searchQuery) {
+      // Filter products based on the search query
+      this.filteredProducts = this.allProducts.filter(product =>
+        product.label.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    } else {
+      // If no search query, reset the filteredProducts to all products
+      this.filteredProducts = this.allProducts;
+    }
+    
+    // Debug log to check filtered products
+    console.log('Filtered products:', this.filteredProducts);
   }
+  
+  
 
   handleResponse(event, refresh, resp: any) {
     if (!event || refresh) {
@@ -94,8 +142,11 @@ export class ProductsComponent implements OnInit {
       this.allProducts = [];
     }
 
+    
     resp.data.products.forEach(prd => {
       const product = new Product(prd);
+      console.log('Product ID:', product.id); 
+      console.log('Product Photos:', product.photos);  // Log photos for debugging
       console.log('Product category:', product.category); // Log product category
       this.allProducts.push(product);
     });
@@ -121,23 +172,30 @@ export class ProductsComponent implements OnInit {
 
   getProducts(event, refresh?) {
     if (refresh) this.page = 0;
-    if (this.type === 'sell') {
-      this.productService.posted(this.page++, this.searchQuery).then(
-        resp => this.handleResponse(event, refresh, resp),
-        err => this.handleError(err)
-      );
-    } else {
-      this.productService.available(this.page++, this.searchQuery).then(
-        resp => this.handleResponse(event, refresh, resp),
-        err => this.handleError(err)
-      );
-    }
+    const query = this.searchQuery || '';
+    const category = this.selectedCategory || 'All';  // Default to 'All' if no category is selected
+  
+    const requestObservable = this.type === 'sell'
+      ? this.productService.posted(this.page++, query)
+      : this.productService.available(this.page++, query, category);  // Pass category here
+  
+    requestObservable.then(
+      resp => {
+        console.log('API response:', resp);  // Debug log API response
+        this.handleResponse(event, refresh, resp);
+      },
+      err => {
+        console.error('API Error:', err);  // Log any errors
+        this.handleError(err);
+      }
+    );
   }
+  
 
   fetchCategories() {
     this.categoryService.getCategories().subscribe(
-      (data: any) => {
-        this.categories = ['All', ...data];
+      (data: { name: string, icon: string }[]) => {
+        this.categories = [{ name: 'All', icon: 'globe-outline' }, ...data];
         console.log('Fetched categories:', this.categories); // Log fetched categories
       },
       err => {
@@ -146,6 +204,7 @@ export class ProductsComponent implements OnInit {
       }
     );
   }
+  
 
   initializeProducts() {
     this.products = [];
@@ -154,21 +213,49 @@ export class ProductsComponent implements OnInit {
     this.getProducts(null);
   }
 
-  selectCategory(category: string) {
-    this.selectedCategory = category;
-    console.log('Selected category:', this.selectedCategory); // Log selected category
-    this.filterProductsByCategory();
+  selectCategory(category: { name: string, icon: string }) {
+    this.selectedCategory = category.name;
+    console.log('Selected category:', this.selectedCategory);
+  
+    const type = this.type || 'buy'; // Assuming 'buy' as default if this.type is not set
+    console.log(`Navigating to: /tabs/buy-and-sell/products/${type}/list with category: ${this.selectedCategory}`); // Log navigation path
+  
+    // Navigate to a new page for displaying products based on the selected category
+    this.router.navigate(['/tabs/buy-and-sell/products', type, 'list'], {
+      queryParams: { category: this.selectedCategory }
+    }).then(success => {
+      console.log('Navigation successful:', success);
+    }).catch(error => {
+      console.error('Navigation error:', error);
+    });
   }
+  
+  
+  
+  
+  
 
   filterProductsByCategory() {
-    if (this.selectedCategory === 'All') {
-      this.products = this.allProducts;
-    } else {
-      this.products = this.allProducts.filter(product => {
-        console.log(`Product Category: ${product.category}, Selected Category: ${this.selectedCategory}`);
+    let filteredProducts = this.allProducts;
+  
+    // Filter by category if not 'All'
+    if (this.selectedCategory !== 'All') {
+      filteredProducts = filteredProducts.filter(product => {
         return product.category === this.selectedCategory;
       });
     }
+  
+    // Further filter by search query
+    if (this.searchQuery) {
+      filteredProducts = filteredProducts.filter(product =>
+        product.label.toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+    }
+  
+    this.products = filteredProducts;  // Update the products array
     console.log('Filtered products:', this.products);
   }
+  
+  
+  
 }

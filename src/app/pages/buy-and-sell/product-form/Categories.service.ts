@@ -8,74 +8,72 @@ export class CategoryService {
 
   constructor() {}
 
-  // Predefined categories for buying and selling
-  getCategories(): Observable<string[]> {
+  // Predefined categories with associated icons for buying and selling
+  getCategories(): Observable<{ name: string, icon: string }[]> {
     const categories = [
-      'Electronics',
-      'Jewelry',
-      'Men\'s Clothing',
-      'Women\'s Clothing',
-      'Home Appliances',
-      'Books',
-      'Beauty Products',
-      'Toys & Games',
-      'Sports Gear',                  // Shortened from 'Sports Equipment'
-      'Automotive',
-      'Furniture',
-      'Health Care',                  // Shortened from 'Health & Personal Care'
-      'Garden & Outdoor',
-      'Pet Supplies',
-      'Office Supplies',
-      'Groceries',
-      'Musical Instruments',
-      'Baby Products',
-      'Tools & Improvement',          // Shortened from 'Tools & Home Improvement'
-      'Smartphones & Accessories',
-      'Computers & Accessories',
-      'Video Games',
-      'Cameras & Photography',
-      'Wearable Tech',                // Shortened from 'Wearable Technology'
-      'Luggage & Travel Gear',
-      'Watches',
-      'Handbags & Wallets',
-      'Footwear',
-      'Arts & Crafts',                // Shortened from 'Arts, Crafts & Sewing'
-      'Kitchen & Dining',
-      'Lighting',
-      'Home Décor',
-      'Bath & Bedding',
-      'Heating & Air Quality',        // Shortened from 'Heating, Cooling & Air Quality'
-      'Cleaning Supplies',
-      'Storage & Organization',
-      'Movies & TV',
-      'Music',
-      'Office Electronics',
-      'Outdoor Gear',                 // Shortened from 'Outdoors & Adventure Gear'
-      'Cycling',
-      'Hunting & Fishing',
-      'Camping & Hiking',
-      'Skateboards & Scooters',       // Shortened from 'Skateboards, Scooters & Rollerblades'
-      'Luxury Goods',
-      'Vintage & Collectibles',
-      'Party Supplies',
-      'Costumes & Accessories',
-      'Board Games & Puzzles',
-      'Educational Supplies',
-      'Scientific Gear',              // Shortened from 'Scientific Equipment'
-      'Survival Gear',
-      'Gourmet Food & Drink',
-      'Gift Cards & Vouchers',
-      'Religious Items',
-      'Ethnic Clothing',              // Shortened from 'Ethnic & Cultural Clothing'
-      'Wedding Supplies',             // Shortened from 'Wedding & Event Supplies'
-      'Eco-Friendly Products',        // Shortened from 'Green & Eco-Friendly Products'
-      'DIY Kits',                     // Shortened from 'DIY & Crafting Kits'
-      'Photography Equipment',        // Shortened from 'Photography & Videography Equipment'
-      'Fitness Equipment'             // Shortened from 'Fitness & Exercise Equipment'
+      { name: 'Electronics', icon: 'tv-outline' },
+      { name: 'Jewelry', icon: 'diamond-outline' },
+      { name: 'Men\'s Clothing', icon: 'shirt-outline' },
+      { name: 'Women\'s Clothing', icon: 'woman-outline' },
+      { name: 'Home Appliances', icon: 'home-outline' },
+      { name: 'Books', icon: 'book-outline' },
+      { name: 'Beauty Products', icon: 'brush-outline' },
+      { name: 'Toys & Games', icon: 'game-controller-outline' },
+      { name: 'Sports Gear', icon: 'football-outline' },
+      { name: 'Automotive', icon: 'car-outline' },
+      { name: 'Furniture', icon: 'bed-outline' },
+      { name: 'Health Care', icon: 'heart-outline' },
+      { name: 'Garden & Outdoor', icon: 'leaf-outline' },
+      { name: 'Pet Supplies', icon: 'paw-outline' },
+      { name: 'Office Supplies', icon: 'document-outline' },
+      { name: 'Groceries', icon: 'cart-outline' },
+      { name: 'Musical Instruments', icon: 'musical-notes-outline' },
+      { name: 'Baby Products', icon: 'heart-outline' },
+      { name: 'Tools & Improvement', icon: 'hammer-outline' },
+      { name: 'Smartphones & Accessories', icon: 'phone-portrait-outline' },
+      { name: 'Computers & Accessories', icon: 'desktop-outline' },
+      { name: 'Video Games', icon: 'game-controller-outline' },
+      { name: 'Cameras & Photography', icon: 'camera-outline' },
+      { name: 'Wearable Tech', icon: 'watch-outline' },
+      { name: 'Luggage & Travel Gear', icon: 'briefcase-outline' },
+      { name: 'Watches', icon: 'time-outline' },
+      { name: 'Handbags & Wallets', icon: 'bag-outline' },
+      { name: 'Footwear', icon: 'footsteps-outline' },
+      { name: 'Arts & Crafts', icon: 'color-palette-outline' },
+      { name: 'Kitchen & Dining', icon: 'restaurant-outline' },
+      { name: 'Lighting', icon: 'bulb-outline' },
+      { name: 'Home Décor', icon: 'flower-outline' },
+      { name: 'Bath & Bedding', icon: 'bed-outline' },
+      { name: 'Heating & Air Quality', icon: 'thermometer-outline' },
+      { name: 'Cleaning Supplies', icon: 'trash-outline' },
+      { name: 'Storage & Organization', icon: 'folder-outline' },
+      { name: 'Movies & TV', icon: 'film-outline' },
+      { name: 'Music', icon: 'musical-notes-outline' },
+      { name: 'Office Electronics', icon: 'print-outline' },
+      { name: 'Outdoor Gear', icon: 'bicycle-outline' },
+      { name: 'Cycling', icon: 'bicycle-outline' },
+      { name: 'Hunting & Fishing', icon: 'fish-outline' },
+      { name: 'Camping & Hiking', icon: 'bonfire-outline' },
+      { name: 'Skateboards & Scooters', icon: 'bicycle-outline' },
+      { name: 'Luxury Goods', icon: 'diamond-outline' },
+      { name: 'Vintage & Collectibles', icon: 'pricetag-outline' },
+      { name: 'Party Supplies', icon: 'gift-outline' },
+      { name: 'Costumes & Accessories', icon: 'accessibility-outline' },
+      { name: 'Board Games & Puzzles', icon: 'dice-outline' },
+      { name: 'Educational Supplies', icon: 'school-outline' },
+      { name: 'Scientific Gear', icon: 'beaker-outline' },
+      { name: 'Survival Gear', icon: 'medkit-outline' },
+      { name: 'Gourmet Food & Drink', icon: 'restaurant-outline' },
+      { name: 'Gift Cards & Vouchers', icon: 'card-outline' },
+      { name: 'Religious Items', icon: 'book-outline' },
+      { name: 'Ethnic Clothing', icon: 'shirt-outline' },
+      { name: 'Wedding Supplies', icon: 'heart-outline' },
+      { name: 'Eco-Friendly Products', icon: 'leaf-outline' },
+      { name: 'DIY Kits', icon: 'construct-outline' },
+      { name: 'Photography Equipment', icon: 'camera-outline' },
+      { name: 'Fitness Equipment', icon: 'barbell-outline' }
     ];
-    
   
     return of(categories);
-    
   }
 }

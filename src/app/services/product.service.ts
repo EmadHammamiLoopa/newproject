@@ -31,13 +31,18 @@ export class ProductService extends DataService {
     });
   }
 
-  available(page: number, query: string){
+  available(page: number, query: string, category: string) {
     return this.sendRequest({
       method: 'get',
       url: '/available',
-      data: {page: page.toString(), search: query}
+      data: { 
+        page: page.toString(), 
+        search: query, 
+        category: category  // Pass the selected category to the backend
+      }
     });
   }
+  
 
   get(id: string){
     return this.sendRequest({

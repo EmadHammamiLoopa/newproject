@@ -32,14 +32,22 @@
 
     <ion-slides pager="true">
       <ion-slide *ngFor="let photo of product.photos">
-        <img [src]="photo.path" class="product-image" alt="Product Image">
+        <div class="product-image-wrapper">
+          <img [src]="'http://127.0.0.1:3300' + photo.path" class="product-image" alt="Product Image">
+          <!-- Conditionally show 'Sold' stamp when the product is marked as sold -->
+          <div class="sold-stamp" *ngIf="product.sold">
+            <img src="assets/images/sold.png" alt="Sold Stamp">
+          </div>
+        </div>
       </ion-slide>
     </ion-slides>
+    
     <ion-fab horizontal="end" vertical="bottom" class="mt-5" *ngIf="isSeller">
       <ion-fab-button (click)="removeConfirmation()" color="danger">
         <ion-icon name="trash"></ion-icon>
       </ion-fab-button>
     </ion-fab>
+    
 
     <ion-item>
       <ion-label class="ml-2">

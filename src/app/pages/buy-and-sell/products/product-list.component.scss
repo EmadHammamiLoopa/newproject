@@ -1,0 +1,108 @@
+:host {
+    display: block;
+    padding: 16px;
+    background-color: #f0f2f5;
+  }
+  
+  ion-content {
+    --background: #f0f2f5;
+  }
+  
+  /* Product Card Styles */
+  .product-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Product Image */
+  .product-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  /* Product Details */
+  .product-details {
+    padding: 12px;
+  }
+  
+  .product-label {
+    font-weight: 500;
+    font-size: 14px;
+    color: #333;
+  }
+  
+  .product-price {
+    font-weight: bold;
+    color: #e74c3c;
+    margin-top: 5px;
+    font-size: 15px;
+  }
+  
+  /* Time styling */
+  .product-time {
+    font-size: 12px;
+    color: #777;
+    margin-left: 10px;
+  }
+  
+  .label-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* Responsive grid adjustments */
+  .product-grid {
+    padding: 8px;
+  }
+  
+  ion-col {
+    padding: 10px;
+  }
+  
+  @media (min-width: 768px) {
+    ion-col {
+      padding: 12px;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    ion-col {
+      padding: 14px;
+    }
+  }
+  
+  /* No products found */
+  .no-products-found {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; // Full screen height
+  
+    p {
+      font-size: 1.2rem;
+      color: #555;
+      margin-top: 20px;
+      text-align: center;
+    }
+  
+    .no-products-svg {
+      width: 180px;
+      height: 180px;
+      opacity: 0.9;
+    }
+  }
+  

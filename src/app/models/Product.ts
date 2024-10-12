@@ -89,8 +89,10 @@ export class Product {
   get enabled(): boolean { return this._enabled; }
   get sold(): boolean { return this._sold; }
   get user(): User | string { return this._user; }
-  get photos(): { path: string; type: string }[] { return this._photos; }
-  get createdAt(): Date { return this._createdAt; }
+  get photos(): { path: string; type: string; url?: string }[] {
+    return this._photos;
+  }
+    get createdAt(): Date { return this._createdAt; }
   get category(): string { return this._category; }
   get stock(): number { return this._stock; }
   get brand(): string { return this._brand; }

@@ -18,6 +18,7 @@ import { IonicModule } from '@ionic/angular';
 import { BuyAndSellPageRoutingModule } from './buy-and-sell-routing.module';
 
 import { BuyAndSellPage } from './buy-and-sell.page';
+import { ProductListComponent } from './products/product-list.component';
 
 @NgModule({
   imports: [
@@ -34,7 +35,9 @@ import { BuyAndSellPage } from './buy-and-sell.page';
     ProductsComponent,
     SelectComponent,
     ProductFormComponent,
-    ProductComponent
+    ProductComponent,
+    ProductListComponent,
+
   ],
   providers: [
     Camera,
