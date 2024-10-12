@@ -77,6 +77,13 @@ export class UserService {
     );
   }
 
+  // user.service.ts
+getCurrentUserId(): string | null {
+  const user = JSON.parse(localStorage.getItem('user')); // Or use sessionStorage if needed
+  return user ? user._id : null;
+}
+
+
   getUserProfile(userId: string): Observable<User> {
     return this.http.get<any>(`${this.apiUrl}/profile/${userId}`).pipe(
       map((response: any) => {

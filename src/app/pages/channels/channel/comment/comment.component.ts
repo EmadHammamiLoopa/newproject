@@ -54,7 +54,7 @@ export class CommentComponent implements OnInit, OnChanges {
 
   getMediaUrl(comment: Comment): string {
     if (comment.media && comment.media.url) {
-      const baseUrl = 'http://127.0.0.1:3300';
+      const baseUrl = 'http://127.0.0.1:3300/';
       const mediaUrl = baseUrl + comment.media.url.replace(/\\/g, '/');
       console.log("Generated Media URL:", mediaUrl);  // Debugging output
       return mediaUrl;  // Ensure URL uses forward slashes

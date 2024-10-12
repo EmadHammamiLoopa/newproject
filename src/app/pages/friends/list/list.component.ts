@@ -39,8 +39,16 @@ export class ListComponent implements OnInit {
     });
   }
 
+  
   loadUserProfile() {
-    this.userService.getUserProfile('current_user_id').subscribe(
+    const currentUserId = this.userService.getCurrentUserId(); // Dynamically get the current user ID
+    if (!currentUserId) {
+      console.error('Current user ID not found');
+      this.toastService.presentStdToastr('Failed to load profile.');
+      return;
+    }
+  
+    this.userService.getUserProfile(currentUserId).subscribe(
       (profile: User) => {
         this.myProfile = profile; // Set the current user profile
       },
@@ -50,6 +58,7 @@ export class ListComponent implements OnInit {
       }
     );
   }
+  
 
   getFriends(event?: any, refresh: boolean = false) {
     if (!event) this.pageLoading = true;

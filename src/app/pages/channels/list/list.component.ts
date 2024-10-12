@@ -55,7 +55,20 @@ ionViewWillEnter() {
 }
 
 
-  
+getChannelUserId(channel: Channel): string {
+  console.log('Channel:', channel);
+
+  // If channel.user is a string (i.e., the user ID), return it directly
+  if (typeof channel.user === 'string') {
+    console.log('User is a string, returning user ID:', channel.user);
+    return channel.user;
+  }
+
+  // If channel.user is an object (i.e., a User object), return the user's _id
+  console.log('User is an object, returning user._id:', channel.user._id);
+  return channel.user._id;
+}
+
 
   getType() {
     this.route.paramMap.subscribe(params => {

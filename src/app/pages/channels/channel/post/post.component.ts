@@ -66,11 +66,15 @@ export class PostComponent implements OnInit, OnChanges {
       }
     });
   this.updateMediaUrl();
+  this.checkAndRemoveExpiredMedia(); // Check for expired media
+
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['post']) {
       this.updateMediaUrl();
+      this.checkAndRemoveExpiredMedia(); // Check for expired media
+
     }
   }
 
@@ -85,7 +89,7 @@ export class PostComponent implements OnInit, OnChanges {
   
   getMediaUrl(post: Post): string {
     if (post.media && post.media.url) {
-      const baseUrl = 'http://127.0.0.1:3300';
+      const baseUrl = 'http://127.0.0.1:3300/';
       const mediaUrl = baseUrl + post.media.url.replace(/\\/g, '/');
       console.log("Generated Media URL:", mediaUrl);  // Debugging output
       return mediaUrl;  // Ensure URL uses forward slashes
@@ -144,13 +148,25 @@ export class PostComponent implements OnInit, OnChanges {
   getTimeRemaining(expiryDate: string): string {
     const expiryTime = new Date(expiryDate).getTime();
     const currentTime = Date.now();
-    const remainingTime = expiryTime - currentTime;
-
+    const remainingTime = Math.max(expiryTime - currentTime, 0); // Ensure remainingTime is never negative
+  
     const minutes = Math.floor(remainingTime / (1000 * 60)) % 60;
     const hours = Math.floor(remainingTime / (1000 * 60 * 60));
-
+  
     return hours > 0 ? `${hours}h` : `${minutes}m`;
   }
+  
+
+  checkAndRemoveExpiredMedia() {
+    const expiryTime = new Date(this.post.media?.expiryDate).getTime();
+    const currentTime = Date.now();
+  
+    if (expiryTime && expiryTime <= currentTime) {
+      this.post.media.url = '';  // Remove the media URL if it has expired
+    }
+  }
+
+  
 
   voteOnPost(vote: number) {
     this.channelService.voteOnPost(this.post.id, vote).then(

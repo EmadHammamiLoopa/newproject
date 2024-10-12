@@ -75,16 +75,17 @@
       fill="outline"
       size="small"
       (click)="deleteChannel(channel, $event)"
-      *ngIf="user && channel.user._id === user._id && channel.type !== 'static' && channel.type !== 'static_events' && channel.type !== 'static_dating'">
+      *ngIf="user && getChannelUserId(channel) === user._id && channel.type !== 'static' && channel.type !== 'static_events' && channel.type !== 'static_dating'">
       <ion-icon name="trash-bin"></ion-icon>
       Delete
     </ion-button>
     
     
+    
   
       <!-- Show "Follow/Unfollow" button only for channels not created by the user -->
       <ion-button
-      *ngIf="getTypechannel(channel) !== 'static' && user && channel.user._id !== user._id && getTypechannel(channel) !== 'static_events' && getTypechannel(channel) !== 'static_dating'"
+      *ngIf="user && getChannelUserId(channel) !== user._id && getTypechannel(channel) !== 'static' && getTypechannel(channel) !== 'static_events' && getTypechannel(channel) !== 'static_dating'"
       [color]="!channel.followedBy(user._id) ? 'secondary' : 'danger'"
       [disabled]="followLoading.includes(channel.id)"
       fill="outline"

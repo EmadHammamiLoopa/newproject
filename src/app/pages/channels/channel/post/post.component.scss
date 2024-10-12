@@ -48,36 +48,36 @@
   filter: brightness(0.95);
 }
 
+
 /* Expiry circle wrapper */
 .expiry-circle-wrapper {
   position: absolute;
   top: 5px;
   right: 5px;
-  width: 35px; /* Adjust to the circle size */
-  height: 35px; /* Adjust to the circle size */
+  width: 35px; /* Smaller size */
+  height: 35px; /* Smaller size */
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(255, 255, 255, 0.7); /* Light background for better contrast */
+  border-radius: 50%; /* Ensure roundness */
+  padding: 2px; /* Adds padding to make it more balanced */
 }
 
 /* Circular progress bar */
 .expiry-circle {
   position: relative;
-  width: 35px; /* Adjust size */
-  height: 35px; /* Adjust size */
+  width: 30px; /* Smaller size */
+  height: 30px; /* Smaller size */
 }
-
 .circle-svg {
   width: 100%;
   height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
   transform: rotate(-90deg); /* Start from the top */
 }
 circle {
-  fill:rgb(202, 154, 136);
-  stroke-width: 5;
+  fill: #4caf50; /* Better contrasting green */
+  stroke-width: 3; /* Thinner stroke for a less bulky look */
 }
 
 circle:first-child {
@@ -85,10 +85,10 @@ circle:first-child {
 }
 
 .circle-progress {
-  stroke: blue; /* Progress color */
-  stroke-dasharray: 110; /* Adjusted based on the circumference of the circle */
-  stroke-dashoffset: 0; /* This dynamically changes based on progress */
-  transition: stroke-dashoffset 1s linear, stroke 0.5s ease;
+  stroke: #00bcd4; /* Fancy progress color (light blue) */
+  stroke-dasharray: 110;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear, stroke 0.5s ease-in-out;
 }
 /* Time remaining text inside the circle */
 .circle-text {
@@ -100,6 +100,8 @@ circle:first-child {
   color: #fff;
   font-weight: bold;
 }
+
+
 
 /* Custom Popover container */
 .custom-popover {
