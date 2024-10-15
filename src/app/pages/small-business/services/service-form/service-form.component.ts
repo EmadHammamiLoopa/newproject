@@ -2,7 +2,7 @@ import { Router } from '@angular/router';
 import { UploadFileService } from './../../../../services/upload-file.service';
 import { ServiceService } from './../../../../services/service.service';
 import { WebView } from '@ionic-native/ionic-webview/ngx';
-import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { FormBuilder, Validators, FormGroup, FormControl } from '@angular/forms';
 import { ToastService } from './../../../../services/toast.service';
 import { Camera } from '@ionic-native/camera/ngx';
 import { Component, OnInit } from '@angular/core';
@@ -59,19 +59,44 @@ export class ServiceFormComponent implements OnInit {
               private router: Router, private adMobFeeService: AdMobFeeService, private platform: Platform, private jsonService: JsonService,
               private sanitizer: DomSanitizer) { }
 
-  ngOnInit() {
-    this.initializeForm();
-    this.getUserData();
-    this.loadCountryData();
+ngOnInit() {
+  this.initializeForm();
+  this.getUserData();
+  this.loadCountryData();
+
+  // Watch for changes in the company/individual select control
+  this.form.get('company').valueChanges.subscribe((value) => {
+    this.onCompanySelectionChange(value);
+  });
+}
+
+onCompanySelectionChange(value: string) {
+  if (value === 'Company') {
+    this.form.addControl('companyName', new FormControl('', Validators.required));
+  } else {
+    this.form.removeControl('companyName');
+    this.form.patchValue({ companyName: 'Individual' }); // Default value for individual
   }
+}
 
   initializeForm() {
     this.form = this.formBuilder.group({
       title: ['', [Validators.required, Validators.maxLength(50)]],
-      description: ['', [Validators.required, Validators.maxLength(255)]],
       company: ['', [Validators.required, Validators.maxLength(50)]],
-      phone: ['', [Validators.required, Validators.pattern("^[+]?[(]?[0-9]{3}[)]?[- \.]?[0-9]{3}[- \.]?[0-9]{4,6}$"), Validators.maxLength(20)]]
+      phone: ['', [Validators.required, Validators.pattern("^[+]?[(]?[0-9]{3}[)]?[- \.]?[0-9]{3}[- \.]?[0-9]{4,6}$"), Validators.maxLength(20)]],
+      serviceCategory: ['', [Validators.required]],
+      serviceRate: ['', [Validators.required]],
+      availability: ['', [Validators.required]],
+      Experience: ['', [Validators.required]],
+      serviceDuration: ['', [Validators.required]],
+      paymentMethods: ['', [Validators.required]],
+      licenseCertification: ['', [Validators.maxLength(100)]],
+      websitePortfolio: ['', [Validators.pattern('https?://.+')]],
+      address: ['', [Validators.required]],
+      description: ['', [Validators.required, Validators.maxLength(255)]]
     });
+    
+ 
     this.loadCountryData(); // Load countries when initializing the form
   }
 
@@ -160,14 +185,24 @@ export class ServiceFormComponent implements OnInit {
   getServiceForm() {
     const form: FormData = new FormData();
     form.append('title', this.title.value);
-    form.append('company', this.company.value);
+    form.append('company', this.company.value); // This will be overwritten later if company is selected
     form.append('phone', this.phone.value);
     form.append('country', this.selectedCountry);
     form.append('city', this.selectedCity);
     form.append('description', this.description.value);
+    form.append('serviceCategory', this.form.get('serviceCategory').value);  // New field
+    form.append('serviceRate', this.form.get('serviceRate').value);          // New field
+    form.append('availability', this.form.get('availability').value);        // New field
+    form.append('Experience', this.form.get('Experience').value);          // New field
+    form.append('serviceDuration', this.form.get('serviceDuration').value);  // New field
+    form.append('paymentMethods', JSON.stringify(this.form.get('paymentMethods').value));
+    form.append('licenseCertification', this.form.get('licenseCertification').value);      // New field
+    form.append('websitePortfolio', this.form.get('websitePortfolio').value);              // New field
+    form.append('address', this.form.get('address').value);                  // New field
     form.append('photo', this.serviceImage.file, this.serviceImage.name);
     return form;
   }
+  
 
   clearServiceForm() {
     this.form.patchValue({
@@ -182,37 +217,59 @@ export class ServiceFormComponent implements OnInit {
       name: ''
     };
   }
-
   submit() {
+    // Ensure an image is selected
     if (!this.serviceImage.file) {
       this.toastService.presentStdToastr('Please select an image for the service');
       return;
     }
+  
+    // Ensure the form is valid
+    if (this.form.invalid) {
+      this.toastService.presentStdToastr('Please fill in all required fields');
+      return;
+    }
+  
     this.validatorErrors = {};
     this.pageLoading = true;
-    this.serviceService.store(this.getServiceForm())
+  
+    // Prepare the form data for submission
+    const formData = this.getServiceForm();
+  
+    // Handle company and companyName fields
+    if (this.form.get('company').value === 'Company') {
+      // Set the company name from the input
+      formData.set('company', this.form.get('companyName').value); // Use the companyName field
+    } else {
+      // If individual is selected, set company to 'Individual'
+      formData.set('company', 'Individual');
+    }
+  
+    // Submit the form data
+    this.serviceService.store(formData)
       .then(
         resp => {
           this.pageLoading = false;
           console.log(resp);
           this.toastService.presentStdToastr('Service created successfully');
           this.router.navigateByUrl('/tabs/small-business/services');
-          // this.adMobFeeService.showInterstitialAd();
-          this.clearServiceForm();
+          this.clearServiceForm();  // Reset the form after success
         },
         err => {
           this.pageLoading = false;
           if (err.errors) {
-            this.validatorErrors = err.errors;
+            this.validatorErrors = err.errors;  // Display validation errors if any
           }
-          if (typeof err == 'string') {
+          if (typeof err === 'string') {
             this.toastService.presentStdToastr(err);
           }
           console.log(err);
         }
       );
   }
-
+  
+  
+  
   async presentCountriesModal() {
     const result = await this.presentSearchListModal(this.countries, 'Countries');
     if (result) {

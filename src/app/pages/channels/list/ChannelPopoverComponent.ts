@@ -13,10 +13,48 @@ import { Component, Input } from '@angular/core';
     </ion-content>
   `,
   styles: [`
-    .text-muted {
-      color: var(--ion-color-medium);
-      font-size: 0.9rem;
+    ion-content {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px;
+      color: #333;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;  /* Improved contrast for better readability */
       text-align: center;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    p {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #555;  /* Improved contrast for better readability */
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    ion-item-divider {
+      background: rgba(0, 0, 0, 0.05);
+      margin: 20px 0;
+      height: 1px;
+      border-radius: 5px;
+    }
+
+    .text-muted {
+      color: #777;  /* Lighter grey for the disclaimer */
+      font-size: 0.85rem;
+      line-height: 1.4;
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    ion-content::part(scroll) {
+      padding: 20px;
     }
   `]
 })

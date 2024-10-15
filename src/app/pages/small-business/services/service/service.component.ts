@@ -78,6 +78,7 @@ export class ServiceComponent implements OnInit {
     }
   }
 
+  
   getServiceId(){
     this.route.paramMap
     .subscribe(
@@ -95,6 +96,8 @@ export class ServiceComponent implements OnInit {
       (resp: any) => {
         this.pageLoading = false;
         this.service = new Service(resp.data);
+        console.log("this.service this.service",this.service); // Check the format of the createdAt field
+
         this.page++;
         console.log(this.service);
       },

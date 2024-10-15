@@ -3,129 +3,348 @@
 <app-loader *ngIf="pageLoading"></app-loader>
 
 <ion-content *ngIf="!pageLoading">
-  <div (click)="pickImage()" class="w-100 image-container">
-    <div *ngIf="!serviceImage.url" class="w-100 h-100 bg-light d-flex justify-content-center align-items-center">
+  <div (click)="pickImage()" class="w-100 image-container shadow-lg">
+    <div *ngIf="!serviceImage.url" class="w-100 h-100 bg-light d-flex justify-content-center align-items-center rounded">
       <span class="text-center">
         <span *ngIf="!imageLoading" class="text-center">
           <span class="d-block camera">
             <i class="fas fa-camera"></i>
           </span>
-          <span class="d-block">Select an image</span>
+          <span class="d-block btn-placeholder">Select an image</span>
         </span>
         <span *ngIf="imageLoading" class="text-center">
           <span class="d-block camera">
             <i class="fas fa-spinner fa-spin"></i>
           </span>
-          <span class="d-block">Imprting picture ...</span>
+          <span class="d-block">Importing picture ...</span>
         </span>
       </span>
     </div>
-    <img *ngIf="serviceImage.url"  [src]="serviceImage.url" class="w-100" alt="">
+    <img *ngIf="serviceImage.url" [src]="serviceImage.url" class="w-100 rounded shadow" alt="">
   </div>
+
   <form [formGroup]="form">
     <ion-list class="mx-3">
       <ion-item>
-        <ion-input formControlName="company" class="ml-2" placeholder="Company name"></ion-input>
-      </ion-item>
-      <small class="text-danger" *ngIf="(company.dirty && !company.valid) || validatorErrors['company']">
-        <span class="d-block" *ngIf="validatorErrors['company']">{{ validatorErrors['company'][0] }}</span>
-        <span class="d-block" *ngIf="company.hasError('required')">The company name field is required</span>
-        <span class="d-block" *ngIf="company.hasError('maxlength')">
-          The company name must not contain more than {{ company.errors.maxlength.requiredLength }} characters
-        </span>
-      </small>
 
+        <ion-item>
+          <ion-input formControlName="title" class="ml-2" placeholder="Service Title"></ion-input>
+        </ion-item>
+        <small class="text-danger" *ngIf="(title.dirty && !title.valid) || validatorErrors['title']">
+          <span class="d-block" *ngIf="validatorErrors['title']">{{ validatorErrors['title'][0] }}</span>
+          <span class="d-block" *ngIf="title.hasError('required')">The title field is required</span>
+          <span class="d-block" *ngIf="title.hasError('maxlength')">
+            The title must not contain more than {{ title.errors.maxlength.requiredLength }} characters
+          </span>
+        </small>
+  
+        <!-- Country -->
+        <ion-item class="w-100">
+          <div class="w-100 h-100">
+            <ion-button
+              expand="block"
+              fill="clear"
+              color="dark"
+              size="default"
+              class="ion-no-padding ion-no-margin text-capitalize h-100"
+              (click)="presentCountriesModal()"
+            >
+              <span class="w-100 my-3 ml-2 text-left country-btn" [class.btn-placeholder]="!selectedCountry">
+                {{ selectedCountry ? selectedCountry : 'Country' }}
+              </span>
+            </ion-button>
+          </div>
+        </ion-item>
+        <small class="text-danger mt-1" *ngIf="validatorErrors['country']">
+          <span class="d-block" *ngIf="validatorErrors['country']">{{ validatorErrors['country'][0] }}</span>
+        </small>
+  
+        <!-- City -->
+        <ion-item class="w-100">
+          <div class="w-100 h-100">
+            <ion-button
+              expand="block"
+              fill="clear"
+              color="dark"
+              size="default"
+              class="ion-no-padding ion-no-margin text-capitalize h-100"
+              [disabled]="!selectedCountry"
+              (click)="presentCitiesModal()"
+            >
+              <span class="w-100 my-3 ml-2 text-left country-btn" [class.btn-placeholder]="!selectedCity">
+                {{ selectedCity ? selectedCity : 'City' }}
+              </span>
+            </ion-button>
+          </div>
+        </ion-item>
+        <small class="text-danger mt-1" *ngIf="validatorErrors['city']">
+          <span class="d-block" *ngIf="validatorErrors['city']">{{ validatorErrors['city'][0] }}</span>
+        </small>
+
+
+      <!-- Company or Individual selection -->
       <ion-item>
-        <ion-input formControlName="title" class="ml-2" placeholder="Service Title"></ion-input>
+        <ion-label position="stacked">Company or Individual</ion-label>
+        <ion-select formControlName="company" placeholder="Select Company/Individual">
+          <ion-select-option value="Company">Company</ion-select-option>
+          <ion-select-option value="Individual">Individual</ion-select-option>
+        </ion-select>
       </ion-item>
-      <small class="text-danger" *ngIf="(title.dirty && !title.valid) || validatorErrors['title']">
-        <span class="d-block" *ngIf="validatorErrors['title']">{{ validatorErrors['title'][0] }}</span>
-        <span class="d-block" *ngIf="title.hasError('required')">The title field is required</span>
-        <span class="d-block" *ngIf="title.hasError('maxlength')">
-          The title must not contain more than {{ title.errors.maxlength.requiredLength }} characters
-        </span>
+      <small class="text-danger" *ngIf="form.get('company').invalid && form.get('company').touched">
+        Company/Individual is required.
       </small>
 
-
-      <ion-item class="w-100">
-        <div class="w-100 h-100">
-          <ion-button
-            expand="block"
-            fill="clear"
-            color="dark"
-            size="default"
-            class="ion-no-padding ion-no-margin text-capitalize h-100"
-            (click)="presentCountriesModal()"
-          >
-            <span class="w-100 my-3 ml-2 text-left country-btn" [class.btn-placeholder]="!selectedCountry">
-              {{ selectedCountry ? selectedCountry : 'Country' }}
-            </span>
-          </ion-button>
-        </div>
+      <!-- Conditionally show the company name input if 'Company' is selected -->
+      <ion-item *ngIf="form.get('company').value === 'Company'">
+        <ion-label position="stacked">Company Name</ion-label>
+        <ion-input formControlName="companyName" placeholder="Enter Company Name"></ion-input>
       </ion-item>
-      <small class="text-danger mt-1" *ngIf="validatorErrors['country']">
-        <span class="d-block" *ngIf="validatorErrors['country']">{{ validatorErrors['country'][0] }}</span>
+      <small class="text-danger" *ngIf="form.get('companyName')?.invalid && form.get('companyName')?.touched">
+        Company name is required.
       </small>
-
-      <ion-item class="w-100">
-        <div class="w-100 h-100">
-          <ion-button
-            expand="block"
-            fill="clear"
-            color="dark"
-            size="default"
-            class="ion-no-padding ion-no-margin text-capitalize h-100"
-            [disabled]="!selectedCountry"
-            (click)="presentCitiesModal()"
-          >
-            <span class="w-100 my-3 ml-2 text-left country-btn" [class.btn-placeholder]="!selectedCity">
-              {{ selectedCity ? selectedCity : 'City' }}
-            </span>
-          </ion-button>
-        </div>
-      </ion-item>
-      <small class="text-danger mt-1" *ngIf="validatorErrors['city']">
-        <span class="d-block" *ngIf="validatorErrors['city']">{{ validatorErrors['city'][0] }}</span>
+      
+              
+        <ion-label position="stacked">Select Service Category</ion-label>
+        <ion-select formControlName="serviceCategory" placeholder="Select Service Category">
+            <!-- Household Services -->
+            <ion-select-option value="Cleaning">Cleaning</ion-select-option>
+            <ion-select-option value="Plumbing">Plumbing</ion-select-option>
+            <ion-select-option value="Electrical">Electrical</ion-select-option>
+            <ion-select-option value="Landscaping">Landscaping</ion-select-option>
+            <ion-select-option value="Painting">Painting</ion-select-option>
+            <ion-select-option value="Carpentry">Carpentry</ion-select-option>
+            <ion-select-option value="HVAC">HVAC (Heating, Ventilation, Air Conditioning)</ion-select-option>
+            <ion-select-option value="Pest Control">Pest Control</ion-select-option>
+        
+            <!-- Health & Wellness -->
+            <ion-select-option value="Personal Training">Personal Training</ion-select-option>
+            <ion-select-option value="Massage Therapy">Massage Therapy</ion-select-option>
+            <ion-select-option value="Yoga Instructor">Yoga Instructor</ion-select-option>
+            <ion-select-option value="Nutritionist">Nutritionist</ion-select-option>
+            <ion-select-option value="Physical Therapy">Physical Therapy</ion-select-option>
+            <ion-select-option value="Chiropractor">Chiropractor</ion-select-option>
+        
+            <!-- Consulting & Professional Services -->
+            <ion-select-option value="Consulting">Consulting</ion-select-option>
+            <ion-select-option value="Legal Services">Legal Services</ion-select-option>
+            <ion-select-option value="Financial Planning">Financial Planning</ion-select-option>
+            <ion-select-option value="Accounting">Accounting</ion-select-option>
+            <ion-select-option value="Marketing">Marketing</ion-select-option>
+            <ion-select-option value="Business Coaching">Business Coaching</ion-select-option>
+            <ion-select-option value="Web Development">Web Development</ion-select-option>
+            <ion-select-option value="Software Development">Software Development</ion-select-option>
+            <ion-select-option value="Graphic Design">Graphic Design</ion-select-option>
+            <ion-select-option value="Translation Services">Translation Services</ion-select-option>
+        
+            <!-- Education & Tutoring -->
+            <ion-select-option value="Tutoring">Tutoring</ion-select-option>
+            <ion-select-option value="Language Instruction">Language Instruction</ion-select-option>
+            <ion-select-option value="Music Lessons">Music Lessons</ion-select-option>
+            <ion-select-option value="Art Classes">Art Classes</ion-select-option>
+            <ion-select-option value="Dance Instruction">Dance Instruction</ion-select-option>
+        
+            <!-- Transportation & Delivery -->
+            <ion-select-option value="Taxi Service">Taxi Service</ion-select-option>
+            <ion-select-option value="Moving Service">Moving Service</ion-select-option>
+            <ion-select-option value="Courier Service">Courier Service</ion-select-option>
+            <ion-select-option value="Ride-Sharing">Ride-Sharing</ion-select-option>
+            <ion-select-option value="Delivery Service">Delivery Service</ion-select-option>
+        
+            <!-- Event Services -->
+            <ion-select-option value="Event Planning">Event Planning</ion-select-option>
+            <ion-select-option value="Catering">Catering</ion-select-option>
+            <ion-select-option value="Photography">Photography</ion-select-option>
+            <ion-select-option value="Videography">Videography</ion-select-option>
+            <ion-select-option value="DJ Services">DJ Services</ion-select-option>
+            <ion-select-option value="Wedding Planning">Wedding Planning</ion-select-option>
+        
+            <!-- Beauty & Grooming -->
+            <ion-select-option value="Hair Stylist">Hair Stylist</ion-select-option>
+            <ion-select-option value="Makeup Artist">Makeup Artist</ion-select-option>
+            <ion-select-option value="Nail Technician">Nail Technician</ion-select-option>
+            <ion-select-option value="Barber">Barber</ion-select-option>
+            <ion-select-option value="Aesthetician">Aesthetician</ion-select-option>
+            <ion-select-option value="Tattoo Artist">Tattoo Artist</ion-select-option>
+        
+            <!-- Auto Services -->
+            <ion-select-option value="Auto Repair">Auto Repair</ion-select-option>
+            <ion-select-option value="Car Wash">Car Wash</ion-select-option>
+            <ion-select-option value="Auto Detailing">Auto Detailing</ion-select-option>
+            <ion-select-option value="Tire Services">Tire Services</ion-select-option>
+            <ion-select-option value="Roadside Assistance">Roadside Assistance</ion-select-option>
+            <ion-select-option value="Towing Service">Towing Service</ion-select-option>
+        
+            <!-- Tech & IT Services -->
+            <ion-select-option value="IT Support">IT Support</ion-select-option>
+            <ion-select-option value="Cybersecurity">Cybersecurity</ion-select-option>
+            <ion-select-option value="Network Installation">Network Installation</ion-select-option>
+            <ion-select-option value="Cloud Services">Cloud Services</ion-select-option>
+            <ion-select-option value="Data Recovery">Data Recovery</ion-select-option>
+            <ion-select-option value="Mobile App Development">Mobile App Development</ion-select-option>
+        
+            <!-- Other Services -->
+            <ion-select-option value="Pet Grooming">Pet Grooming</ion-select-option>
+            <ion-select-option value="Dog Walking">Dog Walking</ion-select-option>
+            <ion-select-option value="House Sitting">House Sitting</ion-select-option>
+            <ion-select-option value="Personal Shopping">Personal Shopping</ion-select-option>
+            <ion-select-option value="Tailoring">Tailoring</ion-select-option>
+            <ion-select-option value="Laundry Services">Laundry Services</ion-select-option>
+            <ion-select-option value="Other">Other</ion-select-option>
+          </ion-select>
+        </ion-item>
+      <small class="text-danger" *ngIf="form.get('serviceCategory').invalid && form.get('serviceCategory').touched">
+        Service category is required.
       </small>
+        
+            <!-- Phone Number -->
+            <ion-item>
+              <ion-input formControlName="phone" type="text" class="ml-2" placeholder="Phone number"></ion-input>
+            </ion-item>
+            <small class="text-danger" *ngIf="(phone.dirty && !phone.valid) || validatorErrors['phone']">
+              <span class="d-block" *ngIf="validatorErrors['phone']">{{ validatorErrors['phone'][0] }}</span>
+              <span class="d-block" *ngIf="phone.hasError('required')">The Phone number field is required</span>
+              <span class="d-block" *ngIf="phone.hasError('maxlength')">
+                The Phone number must not contain more than {{ phone.errors.maxlength.requiredLength }} characters
+              </span>
+              <span class="d-block" *ngIf="phone.hasError('pattern')">This field must contain a valid phone number</span>
+            </small>
 
+            
+
+              <!-- Address -->
       <ion-item>
-        <ion-input formControlName="phone" type="text" class="ml-2" placeholder="Phone number"></ion-input>
+        <ion-label position="stacked">Service Address</ion-label>
+        <ion-input formControlName="address" placeholder="Service Address"></ion-input>
       </ion-item>
-      <small class="text-danger" *ngIf="(phone.dirty && !phone.valid) || validatorErrors['phone']">
-        <span class="d-block" *ngIf="validatorErrors['phone']">{{ validatorErrors['phone'][0] }}</span>
-        <span class="d-block" *ngIf="phone.hasError('required')">The Phone number field is required</span>
-        <span class="d-block" *ngIf="phone.hasError('maxlength')">
-          The Phone number must not contain more than {{ phone.errors.maxlength.requiredLength }} characters
-        </span>
-        <span class="d-block" *ngIf="phone.hasError('pattern')">This field must contain a valid phone number</span>
+      <small class="text-danger" *ngIf="form.get('address').invalid && form.get('address').touched">
+        Service address is required.
       </small>
 
+
+
+      <!-- Service Rate -->
       <ion-item>
-        <ion-textarea formControlName="description" class="ml-2" rows="5" placeholder=" Service Description"></ion-textarea>
+        <ion-label position="stacked">Service Rate (e.g., $25/hour)</ion-label>
+        <ion-input formControlName="serviceRate" placeholder="Service Rate (e.g., $25/hour)"></ion-input>
       </ion-item>
-      <small class="text-danger" *ngIf="(description.dirty && !description.valid) || validatorErrors['description']">
-        <span class="d-block" *ngIf="validatorErrors['description']">{{ validatorErrors['description'][0] }}</span>
-        <span class="d-block" *ngIf="description.hasError('required')">The description field is required</span>
-        <span class="d-block" *ngIf="description.hasError('maxlength')">
-          The description must not contain more than {{ description.errors.maxlength.requiredLength }} characters
-        </span>
+      <small class="text-danger" *ngIf="form.get('serviceRate').invalid && form.get('serviceRate').touched">
+        Service rate is required.
       </small>
+  
+      <!-- Availability -->
+      <ion-item>
+        <ion-label position="stacked">Availability (e.g., Mon-Fri 9 AM - 6 PM)</ion-label>
+
+        <ion-input formControlName="availability" placeholder="Availability (e.g., Mon-Fri 9 AM - 6 PM)"></ion-input>
+      </ion-item>
+      <small class="text-danger" *ngIf="form.get('availability').invalid && form.get('availability').touched">
+        Availability is required.
+      </small>
+  
+      <!-- Service Area -->
+      <ion-item>
+        <ion-label position="stacked">Experience Level</ion-label>
+        <ion-select formControlName="Experience" placeholder="Select experience level">
+          <ion-select-option value="Beginner">Beginner</ion-select-option>
+          <ion-select-option value="Intermediate">Intermediate</ion-select-option>
+          <ion-select-option value="Expert">Expert</ion-select-option>
+        </ion-select>
+      </ion-item>
+      
+      <small class="text-danger" *ngIf="form.get('Experience').invalid && form.get('Experience').touched">
+        Service area is required.
+      </small>
+  
+      <!-- Service Duration -->
+      <ion-item>
+        <ion-label position="stacked">Service Duration (e.g., 2 hours)</ion-label>
+
+        <ion-input formControlName="serviceDuration" placeholder="Service Duration (e.g., 2 hours)"></ion-input>
+      </ion-item>
+      <small class="text-danger" *ngIf="form.get('serviceDuration').invalid && form.get('serviceDuration').touched">
+        Service duration is required.
+      </small>
+  
+      <!-- Payment Methods -->
+      <ion-item>
+        <ion-label position="stacked">Payment Methods</ion-label>
+
+        <ion-select formControlName="paymentMethods" multiple="true" placeholder="Select Payment Methods">
+          <ion-select-option value="Cash">Cash</ion-select-option>
+          <ion-select-option value="Card">Card</ion-select-option>
+          <ion-select-option value="Online Payment">Online Payment</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <small class="text-danger" *ngIf="form.get('paymentMethods').invalid && form.get('paymentMethods').touched">
+        At least one payment method is required.
+      </small>
+  
+      <!-- License/Certification (optional) -->
+      <ion-item>
+        <ion-label position="stacked">License/Certification (if applicable)</ion-label>
+
+        <ion-input formControlName="licenseCertification" placeholder="License/Certification (if applicable)"></ion-input>
+      </ion-item>
+      <small class="text-danger" *ngIf="form.get('licenseCertification').invalid && form.get('licenseCertification').touched">
+        License/Certification must not exceed 100 characters.
+      </small>
+  
+      
+      <!-- Website/Portfolio (optional) -->
+      <ion-item>
+        <ion-label position="stacked">Website/Portfolio (if applicable)</ion-label>
+
+        <ion-input formControlName="websitePortfolio" placeholder="Website/Portfolio (if applicable)"></ion-input>
+      </ion-item>
+      <small class="text-danger" *ngIf="form.get('websitePortfolio').invalid && form.get('websitePortfolio').touched">
+        Please enter a valid URL.
+      </small>
+  
+
+     <!-- Service Description -->
+     <ion-item>
+      <ion-label position="stacked">Service Description</ion-label>
+      <ion-textarea formControlName="description" class="ml-2" rows="5" placeholder="Service Description"></ion-textarea>
+    </ion-item>
+    <small class="text-danger" *ngIf="(description.dirty && !description.valid) || validatorErrors['description']">
+      <span class="d-block" *ngIf="validatorErrors['description']">{{ validatorErrors['description'][0] }}</span>
+      <span class="d-block" *ngIf="description.hasError('required')">The description field is required</span>
+      <span class="d-block" *ngIf="description.hasError('maxlength')">
+        The description must not contain more than {{ description.errors.maxlength.requiredLength }} characters
+      </span>
+    </small>
+
+
+
+
+      <!-- Service Title -->
+ 
+
+
+ 
+
+
+
 
     </ion-list>
   </form>
 </ion-content>
-<ion-footer class="px-3">
-  <ion-item>
+
+<ion-footer class="custom-footer px-3">
+  <ion-item lines="none" class="custom-footer-item">
     <div class="w-100">
       <ion-button
+        class="custom-post-button"
         expand="block"
-        size="default"
+        size="large"
         color="primary"
         (click)="submit()"
         [disabled]="isFormValid(form)"
       >
-       Post
+        Post
       </ion-button>
     </div>
   </ion-item>
 </ion-footer>
+
+

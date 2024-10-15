@@ -1,11 +1,84 @@
-.image-container{
+.image-container {
   height: 250px;
   overflow: hidden;
+  background-color: #f8f9fa; /* Light background */
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
 }
-.camera{
+
+.camera {
   font-size: 25px;
+  color: #007bff; /* Blue camera icon */
 }
-.btn-placeholder{
-  font-weight: 300;
-  font-size: 15px;
+
+.btn-placeholder {
+  font-weight: 500;
+  font-size: 16px;
+  color: #6c757d; /* Gray color for placeholder text */
+}
+
+.shadow-lg {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15); /* Larger shadow for depth */
+}
+
+ion-item {
+  --background: #fff;
+  --border-radius: 10px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.08); /* Add light shadow for item cards */
+}
+
+ion-input, ion-select {
+  --padding-start: 10px;
+  --padding-end: 10px;
+  --background: #f8f9fa; /* Light background for inputs */
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 5px;
+}
+
+ion-label {
+  font-weight: 500;
+  color: #343a40;
+}
+
+ion-footer {
+  --background: #ffffff; /* Set footer background to white */
+  padding: 10px;
+  box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.1); /* Slight shadow at the top of the footer */
+}
+
+
+ion-button {
+  --background: #007bff; /* Ensure button has a visible background color */
+  color: white; /* White text on the button */
+  font-weight: 500;
+}
+
+.custom-footer {
+  background-color: #f8f9fa; /* Light gray background for contrast */
+  padding: 15px;
+  border-top: 1px solid #e0e0e0; /* Light border to separate from content */
+  box-shadow: 0px -4px 8px rgba(0, 0, 0, 0.1); /* Slight shadow for depth */
+}
+
+.custom-footer-item {
+  --background: transparent; /* Remove background from ion-item */
+  padding: 0;
+}
+
+.custom-post-button {
+  --border-radius: 25px; /* Rounded corners */
+  --box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2); /* Add shadow for depth */
+  --background: linear-gradient(45deg, #007bff, #00c6ff); /* Gradient background */
+  color: white; /* White text for contrast */
+  font-weight: bold; /* Bold text */
+  padding: 12px 0;
+}
+
+.custom-post-button:disabled {
+  --background: #c0c0c0; /* Disabled button color */
+  cursor: not-allowed;
 }
