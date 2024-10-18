@@ -24,6 +24,8 @@
     <form [formGroup]="form">
       <ion-list class="mx-3">
         <ion-item>
+          <ion-label position="stacked">Company Name:</ion-label>
+
           <ion-input formControlName="company" class="ml-2" placeholder="Company name"></ion-input>
         </ion-item>
         <small class="text-danger mt-1" *ngIf="(company.dirty && !company.valid) || validatorErrors['company']">
@@ -35,6 +37,8 @@
         </small>
 
         <ion-item>
+          <ion-label position="stacked">Title</ion-label>
+
           <ion-input formControlName="title" class="ml-2" placeholder="Job Title"></ion-input>
         </ion-item>
         <small class="text-danger mt-1" *ngIf="(title.dirty && !title.valid) || validatorErrors['title']">
@@ -45,7 +49,11 @@
           </span>
         </small>
 
+        
         <ion-item class="w-100">
+          <!-- Custom label for Country -->
+          <span class="custom-label" [class.active]="selectedCountry">Country:</span>
+        
           <div class="w-100 h-100">
             <ion-button
               expand="block"
@@ -56,7 +64,7 @@
               (click)="presentCountriesModal()"
             >
               <span class="w-100 my-3 ml-2 text-left country-btn" [class.btn-placeholder]="!selectedCountry">
-                {{ selectedCountry ? selectedCountry : 'Country' }}
+                {{ selectedCountry ? selectedCountry : 'Select Country' }}
               </span>
             </ion-button>
           </div>
@@ -64,8 +72,11 @@
         <small class="text-danger mt-1" *ngIf="validatorErrors['country']">
           <span class="d-block" *ngIf="validatorErrors['country']">{{ validatorErrors['country'][0] }}</span>
         </small>
-
+        
         <ion-item class="w-100">
+          <!-- Custom label for City -->
+          <span class="custom-label" [class.active]="selectedCity">City:</span>
+        
           <div class="w-100 h-100">
             <ion-button
               expand="block"
@@ -77,7 +88,7 @@
               (click)="presentCitiesModal()"
             >
               <span class="w-100 my-3 ml-2 text-left country-btn" [class.btn-placeholder]="!selectedCity">
-                {{ selectedCity ? selectedCity : 'City' }}
+                {{ selectedCity ? selectedCity : 'Select City' }}
               </span>
             </ion-button>
           </div>
@@ -85,8 +96,20 @@
         <small class="text-danger mt-1" *ngIf="validatorErrors['city']">
           <span class="d-block" *ngIf="validatorErrors['city']">{{ validatorErrors['city'][0] }}</span>
         </small>
+        
 
         <ion-item>
+          <ion-label position="stacked">Service Address</ion-label>
+          <ion-input formControlName="address" placeholder="Service Address"></ion-input>
+        </ion-item>
+        <small class="text-danger" *ngIf="form.get('address').invalid && form.get('address').touched">
+          Service address is required.
+        </small>
+
+        
+        <ion-item>
+          <ion-label position="stacked">Email:</ion-label>
+
           <ion-input formControlName="email" type="email" class="ml-2" placeholder="Company Email"></ion-input>
         </ion-item>
         <small class="text-danger mt-1" *ngIf="(email.dirty && !email.valid) || validatorErrors['email']">
@@ -99,6 +122,214 @@
         </small>
 
         <ion-item>
+          <ion-label position="stacked">Job Type:</ion-label>
+          <ion-select formControlName="jobType" placeholder="Job Type">
+            <ion-select-option *ngFor="let type of jobTypes" [value]="type">{{ type }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+        
+        <ion-item>
+          <ion-label position="stacked">Salary Range (Local currency)</ion-label>
+          <ion-range
+            [min]="1000"
+            [max]="1000000"
+            [step]="5000"
+            dualKnobs="true"
+            pin="true"
+            snaps="true"
+            (ionChange)="updateSalaryRange($event)"
+          >
+            <ion-label slot="start">1K</ion-label>
+            <ion-label slot="end">1M</ion-label>
+          </ion-range>
+        </ion-item>
+        
+        
+        
+        
+        <ion-item>
+          <ion-label position="stacked">Experience Level:</ion-label>
+
+          <ion-select formControlName="experienceLevel" placeholder="Experience Level">
+            <ion-select-option *ngFor="let level of experienceLevels" [value]="level">{{ level }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+        
+        <ion-item>
+          <ion-label position="stacked">Job Category</ion-label>
+
+          <ion-select formControlName="jobCategory" placeholder="Select Job Category">
+            <ion-select-option value="SoftwareDeveloper">Software Developer</ion-select-option>
+            <ion-select-option value="ProjectManager">Project Manager</ion-select-option>
+            <ion-select-option value="GraphicDesigner">Graphic Designer</ion-select-option>
+            <ion-select-option value="DataAnalyst">Data Analyst</ion-select-option>
+            <ion-select-option value="HRManager">HR Manager</ion-select-option>
+            <ion-select-option value="MarketingSpecialist">Marketing Specialist</ion-select-option>
+            <ion-select-option value="SalesRepresentative">Sales Representative</ion-select-option>
+            <ion-select-option value="Accountant">Accountant</ion-select-option>
+            <ion-select-option value="CustomerSupport">Customer Support Specialist</ion-select-option>
+            <ion-select-option value="Nurse">Nurse</ion-select-option>
+            <ion-select-option value="Teacher">Teacher</ion-select-option>
+            <ion-select-option value="BusinessAnalyst">Business Analyst</ion-select-option>
+            <ion-select-option value="CivilEngineer">Civil Engineer</ion-select-option>
+            <ion-select-option value="MechanicalEngineer">Mechanical Engineer</ion-select-option>
+            <ion-select-option value="ElectricalEngineer">Electrical Engineer</ion-select-option>
+            <ion-select-option value="UIUXDesigner">UI/UX Designer</ion-select-option>
+            <ion-select-option value="WebDeveloper">Web Developer</ion-select-option>
+            <ion-select-option value="ProductManager">Product Manager</ion-select-option>
+            <ion-select-option value="DevOpsEngineer">DevOps Engineer</ion-select-option>
+            <ion-select-option value="LegalCounsel">Legal Counsel</ion-select-option>
+            <ion-select-option value="ContentWriter">Content Writer</ion-select-option>
+            <ion-select-option value="DigitalMarketingSpecialist">Digital Marketing Specialist</ion-select-option>
+            <ion-select-option value="FinancialAnalyst">Financial Analyst</ion-select-option>
+            <ion-select-option value="OperationsManager">Operations Manager</ion-select-option>
+            <ion-select-option value="Architect">Architect</ion-select-option>
+            <ion-select-option value="Pharmacist">Pharmacist</ion-select-option>
+            <ion-select-option value="SoftwareTester">Software Tester</ion-select-option>
+        
+            <!-- Additional job categories -->
+            <ion-select-option value="DataScientist">Data Scientist</ion-select-option>
+            <ion-select-option value="NetworkAdministrator">Network Administrator</ion-select-option>
+            <ion-select-option value="SecurityAnalyst">Security Analyst</ion-select-option>
+            <ion-select-option value="MobileAppDeveloper">Mobile App Developer</ion-select-option>
+            <ion-select-option value="Copywriter">Copywriter</ion-select-option>
+            <ion-select-option value="HumanResourcesSpecialist">Human Resources Specialist</ion-select-option>
+            <ion-select-option value="SystemsAdministrator">Systems Administrator</ion-select-option>
+            <ion-select-option value="DatabaseAdministrator">Database Administrator</ion-select-option>
+            <ion-select-option value="SocialMediaManager">Social Media Manager</ion-select-option>
+            <ion-select-option value="CloudEngineer">Cloud Engineer</ion-select-option>
+            <ion-select-option value="MachineLearningEngineer">Machine Learning Engineer</ion-select-option>
+            <ion-select-option value="ArtificialIntelligenceSpecialist">Artificial Intelligence Specialist</ion-select-option>
+            <ion-select-option value="TechnicalWriter">Technical Writer</ion-select-option>
+            <ion-select-option value="CyberSecuritySpecialist">Cyber Security Specialist</ion-select-option>
+            <ion-select-option value="Biotechnologist">Biotechnologist</ion-select-option>
+            <ion-select-option value="EnvironmentalConsultant">Environmental Consultant</ion-select-option>
+            <ion-select-option value="EventPlanner">Event Planner</ion-select-option>
+            <ion-select-option value="LogisticsCoordinator">Logistics Coordinator</ion-select-option>
+            <ion-select-option value="Translator">Translator</ion-select-option>
+            <ion-select-option value="ResearchScientist">Research Scientist</ion-select-option>
+            <ion-select-option value="SpeechLanguagePathologist">Speech Language Pathologist</ion-select-option>
+            <ion-select-option value="Veterinarian">Veterinarian</ion-select-option>
+            <ion-select-option value="MarketingManager">Marketing Manager</ion-select-option>
+            <ion-select-option value="ElectricalTechnician">Electrical Technician</ion-select-option>
+            <ion-select-option value="MechanicalTechnician">Mechanical Technician</ion-select-option>
+            <ion-select-option value="Surveyor">Surveyor</ion-select-option>
+            <ion-select-option value="Firefighter">Firefighter</ion-select-option>
+            <ion-select-option value="Pilot">Pilot</ion-select-option>
+            <ion-select-option value="Chef">Chef</ion-select-option>
+            <ion-select-option value="PastryChef">Pastry Chef</ion-select-option>
+            <ion-select-option value="Bartender">Bartender</ion-select-option>
+            <ion-select-option value="FlightAttendant">Flight Attendant</ion-select-option>
+            <ion-select-option value="FitnessTrainer">Fitness Trainer</ion-select-option>
+            <ion-select-option value="PersonalTrainer">Personal Trainer</ion-select-option>
+            <ion-select-option value="Dietitian">Dietitian</ion-select-option>
+            <ion-select-option value="Dietitian">Other</ion-select-option>
+
+          </ion-select>
+        </ion-item>
+        
+        <ion-item>
+          <ion-label position="stacked">Remote Option</ion-label>
+          <ion-select formControlName="remoteOption" placeholder="Remote Option">
+            <ion-select-option *ngFor="let option of remoteOptions" [value]="option">{{ option }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+        
+        <ion-item>
+          <ion-label position="stacked">Application Deadline:</ion-label>
+        
+          <ion-datetime 
+            formControlName="applicationDeadline" 
+            displayFormat="MM/DD/YYYY" 
+            placeholder="Select Application Deadline"
+            [min]="minDate" 
+            [max]="maxDate">
+          </ion-datetime>
+        </ion-item>
+        
+        <ion-item>
+          <ion-label position="stacked">Job Requirements:</ion-label>
+
+          <ion-textarea formControlName="jobRequirements" rows="5" placeholder="Job Requirements"></ion-textarea>
+        </ion-item>
+        
+        <ion-item>
+          <ion-label position="stacked">Job Benefits:</ion-label>
+
+          <ion-input formControlName="jobBenefits" class="ml-2" placeholder="Job Benefits (Optional)"></ion-input>
+        </ion-item>
+        
+        <ion-item>
+          <ion-label position="stacked">Education Level:</ion-label>
+
+          <ion-select formControlName="educationLevel" placeholder="Education Level">
+            <ion-select-option value="High School">High School</ion-select-option>
+            <ion-select-option value="Bachelor's">Bachelor's</ion-select-option>
+            <ion-select-option value="Master's">Master's</ion-select-option>
+            <ion-select-option value="PhD">PhD</ion-select-option>
+            <ion-select-option value="Other">Other</ion-select-option>
+          </ion-select>
+        </ion-item>
+        
+        <ion-item>
+          <ion-label position="stacked">Industry:</ion-label>
+
+          <ion-select formControlName="industry" placeholder="Select Industry">
+            <ion-select-option value="Technology">Technology</ion-select-option>
+            <ion-select-option value="Healthcare">Healthcare</ion-select-option>
+            <ion-select-option value="Finance">Finance</ion-select-option>
+            <ion-select-option value="Education">Education</ion-select-option>
+            <ion-select-option value="Manufacturing">Manufacturing</ion-select-option>
+            <ion-select-option value="Retail">Retail</ion-select-option>
+            <ion-select-option value="Telecommunications">Telecommunications</ion-select-option>
+            <ion-select-option value="Hospitality">Hospitality & Tourism</ion-select-option>
+            <ion-select-option value="RealEstate">Real Estate</ion-select-option>
+            <ion-select-option value="Construction">Construction</ion-select-option>
+            <ion-select-option value="Energy">Energy & Utilities</ion-select-option>
+            <ion-select-option value="Transportation">Transportation & Logistics</ion-select-option>
+            <ion-select-option value="Agriculture">Agriculture</ion-select-option>
+            <ion-select-option value="Media">Media & Entertainment</ion-select-option>
+            <ion-select-option value="Legal">Legal Services</ion-select-option>
+            <ion-select-option value="NonProfit">Non-Profit</ion-select-option>
+            <ion-select-option value="Government">Government & Public Sector</ion-select-option>
+            <ion-select-option value="Consulting">Consulting</ion-select-option>
+            <ion-select-option value="Pharmaceutical">Pharmaceutical</ion-select-option>
+            <ion-select-option value="Automotive">Automotive</ion-select-option>
+            <ion-select-option value="Aerospace">Aerospace</ion-select-option>
+            <ion-select-option value="Mining">Mining</ion-select-option>
+            <ion-select-option value="Biotechnology">Biotechnology</ion-select-option>
+            <ion-select-option value="FoodAndBeverage">Food & Beverage</ion-select-option>
+            <ion-select-option value="Insurance">Insurance</ion-select-option>
+            <ion-select-option value="Fashion">Fashion & Apparel</ion-select-option>
+            <ion-select-option value="ArtsAndCulture">Arts & Culture</ion-select-option>
+            <ion-select-option value="Security">Security</ion-select-option>
+            <ion-select-option value="Sports">Sports</ion-select-option>
+            <ion-select-option value="Logistics">Logistics & Supply Chain</ion-select-option>
+            <ion-select-option value="Chemical">Chemical</ion-select-option>
+            <ion-select-option value="Petroleum">Petroleum</ion-select-option>
+          </ion-select>
+        </ion-item>
+        
+        
+        <ion-item>
+          <ion-label position="stacked">Website:</ion-label>
+
+          <ion-input formControlName="website" type="url" class="ml-2" placeholder="Company Website/LinkedIn"></ion-input>
+        </ion-item>
+        
+        <ion-item>
+          <ion-label position="stacked">Job Location:</ion-label>
+
+          <ion-select formControlName="jobLocationType" placeholder="Job Location Type">
+            <ion-select-option value="Headquarters">Headquarters</ion-select-option>
+            <ion-select-option value="Branch Office">Branch Office</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+
+        <ion-item>
+          <ion-label position="stacked">Description</ion-label>
+
           <ion-textarea formControlName="description" class="ml-2" rows="5" placeholder="Job Description"></ion-textarea>
         </ion-item>
         <small class="text-danger mt-1" *ngIf="(description.dirty && !description.valid) || validatorErrors['description']">

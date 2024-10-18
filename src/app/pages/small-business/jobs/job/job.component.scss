@@ -1,7 +1,47 @@
-.image-container{
-  height: 300px;
+.image-container {
+  width: 100%;
+  height: 40vh; /* Set to viewport height for responsiveness */
   overflow: hidden;
 }
-.job-title{
-  font-size: 18px;
+
+.job-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensure image fits within container, maintaining aspect ratio */
+}
+
+.job-title {
+  font-size: 1.6rem;
+}
+
+.local-currency {
+  font-size: 0.8rem; /* Smaller font for local currency */
+  color: #6c757d; /* Light grey color */
+}
+
+ion-item {
+  --padding-start: 12px;
+  --padding-end: 12px;
+  margin-bottom: 10px; /* Spacing between items */
+}
+
+ion-footer {
+  padding: 15px 0;
+}
+
+ion-button {
+  width: 100%; /* Full-width buttons */
+}
+
+/* Media queries for smaller screens */
+@media (max-width: 600px) {
+  .job-title {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .job-title {
+    font-size: 1.2rem;
+  }
 }

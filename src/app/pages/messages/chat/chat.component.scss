@@ -7,6 +7,29 @@
   background-color: var(--ion-color-light);
   border: 1px solid rgb(73, 72, 72);
 }
+
+
+.end-buttons-container {
+  display: flex;
+  justify-content: flex-end; /* Align buttons to the right */
+  gap: 10px; /* Add space between buttons */
+  margin-right: 10px; /* Add margin to prevent touching the screen edges */
+}
+
+.video-button {
+  --padding-start: 12px;
+  --padding-end: 12px;
+  font-size: 14px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+}
+
+video-button i {
+  margin-right: 5px; /* Add some space between the icon and the text */
+}
+
+
 .chat-input {
   height: 40px !important; /* Slightly increase the height for better usability */
   padding-left: 12px !important; /* Increase padding for better spacing */

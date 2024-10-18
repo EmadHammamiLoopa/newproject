@@ -6,22 +6,29 @@
   [reverseColors]="true"
   (titleClicked)="showUserProfile()"
 >
-  <div id="end-buttons" *ngIf="!business">
-    <ion-buttons slot="end">
-      <ion-button [routerLink]="['/messages/video', user?.id]" shape="round">
-        <i class="fas fa-video"></i>
-      </ion-button>
-    </ion-buttons>
-  </div>
+<div id="end-buttons" *ngIf="!business">
+  <ion-buttons slot="end">
+    <!-- Show request video call button for non-friends -->
+    <ion-button *ngIf="!user?.isFriend" (click)="requestVideoCall()" shape="round">
+      <i class="fas fa-video"></i> Request
+    </ion-button>
+
+    <!-- Show start video call button for friends -->
+    <ion-button *ngIf="user?.isFriend" [routerLink]="['/messages/video', user?.id]" shape="round">
+      <i class="fas fa-video"></i>
+    </ion-button>
+  </ion-buttons>
+</div>
+
 </app-header>
 
 <app-loader *ngIf="pageLoading"></app-loader>
 
 <!-- Display product details if the chat is related to a product -->
-<ion-card *ngIf="product">
+<ion-card *ngIf="product" (click)="showUproduct()">
   <ion-row>
     <ion-col size="4">
-      <img [src]="product?.photos[0]?.path" alt="Product Image" />
+      <ion-img [src]="getProductImage(product)" class="product-image"></ion-img>
     </ion-col>
     <ion-col size="8">
       <ion-card-header>
@@ -69,6 +76,14 @@
                     <span *ngIf="message?.state === 'sent'"><i class="fas fa-check ml-2"></i></span>
                   </small>
                 </ion-text>
+
+                <ion-text class="d-block" *ngIf="message?.type === 'video-call-request'">
+                  <i class="fas fa-video"></i> {{ message?.text }}
+                  <small class="pt-2 ml-2 float-right">
+                    <span>{{ message?.createdAt | extractTime }}</span>
+                  </small>
+                </ion-text>
+                
               </div>
             </div>
           </ion-col>

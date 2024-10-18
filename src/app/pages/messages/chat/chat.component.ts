@@ -306,6 +306,7 @@ export class ChatComponent implements OnInit {
 
   initSocketListeners() {
     if (this.socket) {
+      // Listen for incoming messages
       this.socket.on('new-message', (message) => {
         if (this.user && message.from == this.user.id && !this.checkMessageExisting(message)) {
           this.messages.push(new Message().initialize(message));
@@ -315,25 +316,29 @@ export class ChatComponent implements OnInit {
           }, 200);
         }
       });
-
-      this.socket.on('message-sent', (message, ind) => {
-        if (this.sentMessages[ind]) {
-          this.sentMessages[ind].id = message._id;
-          this.sentMessages[ind].state = 'sent';
-          if (this.resend.includes(ind)) this.resend.splice(this.resend.indexOf(ind), 1);
-        }
-
-        this.sentMessages[ind] = undefined;
-      });
-
-      this.socket.on('message-not-sent', (ind) => {
-        if (this.sentMessages[ind]) {
-          this.sentMessages[ind].state = 'failed';
-          if (this.resend.includes(ind)) this.resend.splice(this.resend.indexOf(ind), 1);
+  
+      // Listen for video call requests
+      this.socket.on('video-call-request', (message) => {
+        if (this.user && message.from == this.user.id) {
+          // Add the video call request message to the chat
+          this.messages.push(new Message().initialize({
+            text: `${this.user.fullName} has requested a video call.`,
+            createdAt: new Date(),
+            type: 'video-call-request'
+          }));
+  
+          // Optional: You can display a toast or notification here
+          this.toastService.presentStdToastr(`${this.user.fullName} has requested a video call.`);
+          
+          this.changeDetection.detectChanges();
+          setTimeout(() => {
+            this.scrollToBottom();
+          }, 200);
         }
       });
     }
   }
+  
 
   resendMessage(message) {
     this.resend.push(message.id);
@@ -493,14 +498,24 @@ async showSubscriptionAlert(usedChats: number, totalChats: number) {
     return (this.allowToChat || (this.messages && (this.messages.length <= 1 || this.messages.filter(msg => !msg.isMine(this.authUser.id)).length > 0)));
   }
 
-  ProfileEnabled() {
-    return this.allowToChat || (this.messages && (this.messages.filter(msg => !msg.isMine(this.authUser.id)).length > 0));
-  }
+// Modify ProfileEnabled to always return true
+ProfileEnabled() {
+  return true;  // Allow profile viewing without restrictions
+}
 
-  showUserProfile() {
-    if (this.ProfileEnabled()) this.router.navigateByUrl('/tabs/profile/display/' + this.user.id);
-    else this.lockedProfileAlert();
-  }
+showUserProfile() {
+  // Since ProfileEnabled now always returns true, you don't need the else case anymore
+  this.router.navigateByUrl('/tabs/profile/display/' + this.user.id);
+}
+
+showUproduct() {
+  // Since ProfileEnabled now always returns true, you don't need the else case anymore
+  this.router.navigateByUrl('/tabs/buy-and-sell/product/' + this.productId);
+}
+
+
+
+
 
   async lockedProfileAlert() {
     const alert = await this.alertController.create({
@@ -514,6 +529,15 @@ async showSubscriptionAlert(usedChats: number, totalChats: number) {
       ]
     });
     await alert.present();
+  }
+
+  getProductImage(product: Product): string {
+    if (product.photos && product.photos.length > 0) {
+      console.log("imageeeeerrrrrrrrrrrrrrrrreeeeee",product.photos[0].url);
+      return product.photos[0].url; // Return the URL of the first photo
+    } else {
+      return 'assets/imgs/no-image.png'; // Placeholder image if no photos exist
+    }
   }
 
   videoCall() {
@@ -554,6 +578,48 @@ async showSubscriptionAlert(usedChats: number, totalChats: number) {
     
     return this.messages.length < 10; // Limit for non-friends
   }
+  
+  requestVideoCall() {
+    // Ensure conversation is started and the user can still send messages (if non-friend)
+    if (!this.conversationStarted() || !this.nonFriendsChatEnabled()) {
+      console.log("Cannot request video call: conversation not started or message limit reached.");
+      return;
+    }
+  
+    if (!this.authUser || !this.user) {
+      console.log("Missing user information.");
+      return;
+    }
+  
+    const videoCallMessage = new Message();
+    videoCallMessage.id = this.index.toString();
+    videoCallMessage.from = this.authUser.id;
+    videoCallMessage.to = this.user.id;
+    videoCallMessage.text = `${this.authUser.fullName} has requested a video call.`;
+    videoCallMessage.state = '';
+    videoCallMessage.createdAt = new Date();
+    videoCallMessage.type = 'video-call-request'; // Custom type for video call request
+  
+    this.messages.push(videoCallMessage);
+    this.sentMessages[this.index] = videoCallMessage;
+  
+    // Emit socket event to notify the recipient
+    this.socket.emit('video-call-request', {
+      from: this.authUser.id,
+      to: this.user.id,
+      text: videoCallMessage.text,
+    });
+  
+    this.index++;
+    this.scrollToBottom();
+  }
+  
+  
+  
+  canRequestVideoCall(): boolean {
+    return this.user && !this.user.isFriend;  // Only allow for non-friends
+  }
+  
   
   
 }

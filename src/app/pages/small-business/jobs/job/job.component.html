@@ -19,7 +19,7 @@
   <div *ngIf="job">
     <div class="position-relative">
       <div class="w-100 image-container">
-        <img [src]="job.photo" class="w-100 job-image" alt="">
+        <img [src]="job.photo" class="w-100 job-image" alt="Job Image">
       </div>
       <ion-fab horizontal="end" vertical="bottom" class="mt-5" *ngIf="job.user.id == user.id">
         <ion-fab-button (click)="removeConfirmation()" color="danger">
@@ -27,24 +27,135 @@
         </ion-fab-button>
       </ion-fab>
     </div>
+
+    <!-- Job Title and Company -->
     <ion-item>
       <ion-label class="ml-2">
         <span class="job-title font-weight-bold d-block">{{ job.title }} </span>
         <span class="">{{ job.company }}</span>
       </ion-label>
     </ion-item>
+
+
+    <!-- Email -->
     <ion-item>
       <ion-label class="ml-2" text-wrap>
         <span class="job-title font-weight-bold d-block">E-mail</span>
         <span>{{ job.email }}</span>
       </ion-label>
     </ion-item>
+
+    <!-- Location -->
     <ion-item>
       <ion-label class="ml-2" text-wrap>
         <span class="job-title font-weight-bold d-block">Location</span>
         <span>{{ job.country + ', ' + job.city }}</span>
       </ion-label>
     </ion-item>
+
+            <!-- Service Address -->
+            <ion-item>
+              <ion-label class="ml-2" text-wrap>
+                <span class="job-title font-weight-bold d-block">Job Address</span>
+                <span>{{ job.address }}</span>
+              </ion-label>
+            </ion-item>
+        
+            
+    <!-- Job Type -->
+    <ion-item>
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Job Type</span>
+        <span>{{ job.jobType }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Salary Range -->
+    <ion-item *ngIf="job.minSalary && job.maxSalary">
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">
+          Salary Range <span style="font-size: 0.8em; color: #6c757d;">(Local currency)</span>
+      </span>
+      <span>{{ job.minSalary }} - {{ job.maxSalary }}</span>
+      </ion-label>
+    </ion-item>
+    
+
+    <!-- Experience Level -->
+    <ion-item>
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Experience Level</span>
+        <span>{{ job.experienceLevel }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Remote Option -->
+    <ion-item>
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Remote Option</span>
+        <span>{{ job.remoteOption }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Application Deadline -->
+    <ion-item *ngIf="job.applicationDeadline">
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Application Deadline</span>
+        <span>{{ job.applicationDeadline | date:'MM/dd/yyyy' }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Job Requirements -->
+    <ion-item>
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Job Requirements</span>
+        <span>{{ job.jobRequirements }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Job Benefits -->
+    <ion-item *ngIf="job.jobBenefits">
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Job Benefits</span>
+        <span>{{ job.jobBenefits }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Education Level -->
+    <ion-item>
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Education Level</span>
+        <span>{{ job.educationLevel }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Industry -->
+    <ion-item *ngIf="job.industry">
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Industry</span>
+        <span>{{ job.industry }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Website -->
+    <ion-item *ngIf="job.website">
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Website</span>
+        <span>{{ job.website }}</span>
+      </ion-label>
+    </ion-item>
+
+    <!-- Job Location Type -->
+    <ion-item>
+      <ion-label class="ml-2" text-wrap>
+        <span class="job-title font-weight-bold d-block">Job Location Type</span>
+        <span>{{ job.jobLocationType }}</span>
+      </ion-label>
+    </ion-item>
+
+
+
+    <!-- Description -->
     <ion-item>
       <ion-label class="ml-2" text-wrap>
         <span class="job-title font-weight-bold d-block">Description</span>
@@ -55,7 +166,7 @@
 </ion-content>
 
 <ion-footer class="px-3">
-  <ion-button
+ <!-- <ion-button
     size="default"
     color="primary"
     expand="block"
@@ -63,7 +174,7 @@
     *ngIf="job && user && job.user.id != user.id"
   >
     Contact Us
-  </ion-button>
+  </ion-button>-->
   <ion-button
     size="default"
     color="secondary"
