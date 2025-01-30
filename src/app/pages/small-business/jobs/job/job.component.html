@@ -19,7 +19,7 @@
   <div *ngIf="job">
     <div class="position-relative">
       <div class="w-100 image-container">
-        <img [src]="job.photo" class="w-100 job-image" alt="Job Image">
+        <img [src]="job.photo" class="w-100 job-image" alt="Job Image" loading="lazy">
       </div>
       <ion-fab horizontal="end" vertical="bottom" class="mt-5" *ngIf="job.user.id == user.id">
         <ion-fab-button (click)="removeConfirmation()" color="danger">

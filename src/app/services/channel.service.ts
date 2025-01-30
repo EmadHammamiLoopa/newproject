@@ -17,7 +17,7 @@ export class ChannelService extends DataService {
   myChannels(page: number, search: string){
     return this.sendRequest({
       method: 'get',
-      url: '',
+      url: '/myChannels',
       data: {page: page.toString(), search}
     })
   }
@@ -186,13 +186,17 @@ export class ChannelService extends DataService {
     })
   }
 
-  reportChannel(id: string, message: string){
+  reportChannel(id: string, reportType: string, message: string) {
     return this.sendRequest({
       method: 'post',
       url: '/' + id + '/report',
-      data: {message}
-    })
+      data: {
+        reportType,  // ✅ Now sending `reportType`
+        message      // ✅ Sending the user-provided message
+      }
+    });
   }
+  
 
   reportPost(id: string, message: string){
     return this.sendRequest({

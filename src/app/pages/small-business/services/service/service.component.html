@@ -19,7 +19,7 @@
   <div *ngIf="service">
     <div class="position-relative">
       <div class="w-100 image-container">
-        <img [src]="service.photo" class="w-100 service-image" alt="">
+        <img [src]="service.photo" class="w-100 service-image" alt="" loading="lazy">
       </div>
       <ion-fab horizontal="end" vertical="bottom" class="mt-5" *ngIf="service.user.id == user.id">
         <ion-fab-button (click)="removeConfirmation()" color="danger">

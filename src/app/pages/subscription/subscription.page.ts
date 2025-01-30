@@ -111,6 +111,7 @@ export class SubscriptionPage implements OnInit {
   getSubscriptionPrices(){
     this.loading = true;
     this.subscriptionService.getSubscriptionPrices().then((resp: any) => {
+      console.log("prices:..................",resp);
       this.loading = false;
       this.subscription = new Subscription(resp.data);
       const currency = this.subscription.currency

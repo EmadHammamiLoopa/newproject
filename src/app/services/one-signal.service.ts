@@ -30,7 +30,7 @@ export class OneSignalService {
 
   private initializeOneSignal(user_id: string) {
     console.log(`Initializing OneSignal with user ID: ${user_id}`);
-    (window as any).plugins.OneSignal.startInit("3b993591-823b-4f45-94b0-c2d0f7d0f6d8", "138360337223");
+    (window as any).plugins.OneSignal.startInit("747cfdfa-7570-46eb-a2ba-64682c01a3e9", "MWRjNTcxYWItNGQzZS00N2UwLWJkMGYtYmQxZjFmYTI4MWY5");
     (window as any).plugins.OneSignal.inFocusDisplaying((window as any).plugins.OneSignal.OSInFocusDisplayOption.Notification);
     (window as any).plugins.OneSignal.setExternalUserId(user_id);
     (window as any).plugins.OneSignal.setSubscription(true);

@@ -146,6 +146,8 @@ export class WebrtcService {
     if (WebrtcService.peer) {
       WebrtcService.peer.destroy();
     }
+    this.router.navigate(['/tabs/new-friends']);
+
   }
 
   toggleCamera() {

@@ -1,47 +1,62 @@
 .image-container {
   width: 100%;
-  height: 40vh; /* Set to viewport height for responsiveness */
+  height: auto;
   overflow: hidden;
 }
 
 .job-image {
   width: 100%;
-  height: 100%;
-  object-fit: cover; /* Ensure image fits within container, maintaining aspect ratio */
-}
-
-.job-title {
-  font-size: 1.6rem;
-}
-
-.local-currency {
-  font-size: 0.8rem; /* Smaller font for local currency */
-  color: #6c757d; /* Light grey color */
+  height: auto;
+  object-fit: cover;
 }
 
 ion-item {
-  --padding-start: 12px;
-  --padding-end: 12px;
-  margin-bottom: 10px; /* Spacing between items */
+  padding: 10px;
+}
+
+.job-title,
+.job-description {
+  font-size: 1.5rem; /* Larger font for title and description */
+  margin-bottom: 5px;
+}
+
+.job-details,
+.salary-range {
+  font-size: 3vw; /* Smaller font for other job details */
 }
 
 ion-footer {
-  padding: 15px 0;
+  padding: 5px;
 }
 
 ion-button {
-  width: 100%; /* Full-width buttons */
+  width: 100%;
+  margin: 5px 0;
 }
 
-/* Media queries for smaller screens */
-@media (max-width: 600px) {
-  .job-title {
-    font-size: 1.4rem;
+@media (min-width: 768px) {
+  .job-title,
+  .job-description {
+    font-size: 2rem; /* Larger font for tablets and larger screens */
+  }
+
+  ion-item {
+    padding: 15px;
   }
 }
 
-@media (max-width: 400px) {
-  .job-title {
-    font-size: 1.2rem;
+@media (max-width: 480px) {
+  .job-title,
+  .job-description {
+    font-size: 1.2rem; /* Slightly smaller font for small devices */
   }
+
+  ion-item {
+    padding: 8px;
+  }
+}
+
+ion-label {
+  white-space: normal;
+  word-wrap: break-word; /* Prevent overflow for long text */
 }

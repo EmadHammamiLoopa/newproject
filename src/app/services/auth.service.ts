@@ -40,6 +40,10 @@ export class AuthService extends DataService {
     });
   }
 
+  getCurrentUserId() {
+    return localStorage.getItem('userId'); // Example: Adjust based on authentication method
+  }
+  
   verifyEmail(email: string) {
     return this.sendRequest({
       method: 'post',

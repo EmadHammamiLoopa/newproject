@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools">
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.Loopa.app">
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- Required for foreground services -->
+
+    <!-- Firebase-specific permissions -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- Keeps device awake when receiving notifications -->
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" /> <!-- Required for receiving FCM messages -->
 
     <application
         android:allowBackup="true"
@@ -14,9 +19,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        android:networkSecurityConfig="@xml/network_security_config"> 
-
-        
+        android:networkSecurityConfig="@xml/network_security_config">
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
@@ -41,12 +44,20 @@
                 android:resource="@xml/camera_provider_paths" />
         </provider>
 
+        <!-- Firebase Cloud Messaging Service -->
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <!-- Adding android:exported to receivers as required by Android 12+ -->
         <receiver
             android:name="com.onesignal.ADMMessageHandler$Receiver"
             android:permission="com.amazon.device.messaging.permission.RECEIVE"
-            android:exported="true"> <!-- Ensure android:exported is set -->
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.amazon.device.messaging.intent.RECEIVE" />
                 <action android:name="com.amazon.device.messaging.intent.REGISTRATION" />
@@ -54,15 +65,20 @@
             </intent-filter>
         </receiver>
 
+        <!-- Firebase Instance ID Service (optional but recommended) -->
+        <service
+            android:name="com.google.firebase.iid.FirebaseInstanceIdService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
+            </intent-filter>
+        </service>
 
         <service
             android:name="de.appplant.cordova.plugin.background.ForegroundService"
             android:exported="false"
             android:permission="android.permission.FOREGROUND_SERVICE"
-            android:foregroundServiceType="mediaPlayback"> <!-- Adjust this type as needed -->
-        </service>
-
-        <!-- Additional receivers and components can be defined here -->
+            android:foregroundServiceType="mediaPlayback" />
         
     </application>
 

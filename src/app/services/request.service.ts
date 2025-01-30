@@ -24,7 +24,7 @@ export class RequestService extends DataService {
   requests(page: number){
     return this.sendRequest({
       method: 'get',
-      url: '/',
+      url: '/requests',
       data: {page: page.toString()
     }})
   }

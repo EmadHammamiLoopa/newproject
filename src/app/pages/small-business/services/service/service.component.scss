@@ -1,7 +1,62 @@
-.image-container{
-  height: 250px;
+.image-container {
+  width: 100%;
+  height: auto;
   overflow: hidden;
 }
-.service-title{
-  font-size: 18px;
+
+.service-image {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+ion-item {
+  padding: 10px;
+}
+
+.service-title,
+.service-description {
+  font-size: 1.5rem; /* Larger font for title and description */
+  margin-bottom: 5px;
+}
+
+.time {
+  font-size: 0.9rem; /* Smaller font for time */
+}
+
+.service-category,
+.phone,
+.service-rate {
+  font-size: 3vw; /* Smaller font for these details */
+}
+
+ion-footer {
+  padding: 5px;
+}
+
+ion-button {
+  width: 100%;
+  margin: 5px 0;
+}
+
+@media (min-width: 768px) {
+  .service-title,
+  .service-description {
+    font-size: 2rem; /* Larger font for tablets and larger screens */
+  }
+
+  ion-item {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .service-title,
+  .service-description {
+    font-size: 1.2rem; /* Slightly smaller font for small devices */
+  }
+
+  ion-item {
+    padding: 8px;
+  }
 }

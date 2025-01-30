@@ -10,6 +10,7 @@ import { Post } from './../../../models/Post';
 import { PostFormComponent } from './post-form/post-form.component';
 import { DropDownComponent } from './../../drop-down/drop-down.component';
 import { OneSignalService } from 'src/app/services/one-signal.service';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-channel',
@@ -37,6 +38,7 @@ export class ChannelComponent implements OnInit {
     private router: Router,
     private nativeStorage: NativeStorage,
     private platform: Platform,
+    private authService: AuthService,
     private changeDetectorRef: ChangeDetectorRef,
     private oneSignalService: OneSignalService // Ensure to provide this service if needed
   ) {}
@@ -249,30 +251,147 @@ async showPostForm() {
       }
     );
   }
-
   async reportChannel() {
     const alert = await this.alertCtrl.create({
       header: `Report ${this.channel.name}`,
-      inputs: [{ type: 'text', name: 'message', placeholder: 'Message' }],
+      inputs: [
+        {
+          name: 'reportType',
+          type: 'radio',
+          label: 'Abuse',
+          value: 'Abuse',
+          checked: true
+        },
+        {
+          name: 'reportType',
+          type: 'radio',
+          label: 'Spam',
+          value: 'Spam'
+        },
+        {
+          name: 'reportType',
+          type: 'radio',
+          label: 'Inappropriate Content',
+          value: 'Inappropriate Content'
+        },
+        {
+          name: 'reportType',
+          type: 'radio',
+          label: 'Hate Speech',
+          value: 'Hate Speech'
+        },
+        {
+          name: 'reportType',
+          type: 'radio',
+          label: 'Misinformation/Fake News',
+          value: 'Misinformation'
+        },
+        {
+          name: 'reportType',
+          type: 'radio',
+          label: 'Harassment or Bullying',
+          value: 'Harassment'
+        },
+        {
+          name: 'reportType',
+          type: 'radio',
+          label: 'Violence or Threats',
+          value: 'Violence'
+        },
+        {
+          name: 'reportType',
+          type: 'radio',
+          label: 'Copyright Infringement',
+          value: 'Copyright Infringement'
+        },
+        {
+          name: 'reportType',
+          type: 'radio',
+          label: 'Scam or Fraud',
+          value: 'Scam'
+        },
+        {
+          name: 'reportType',
+          type: 'radio',
+          label: 'Illegal Activities',
+          value: 'Illegal Activities'
+        },
+        {
+          name: 'reportType',
+          type: 'radio',
+          label: 'Other',
+          value: 'Other'
+        }
+      ],
+      buttons: [
+        { text: 'CANCEL', role: 'cancel' },
+        {
+          text: 'NEXT',
+          cssClass: 'text-danger',
+          handler: (selectedValue) => {  
+            console.log("Selected reportType:", selectedValue); // Debugging output
+  
+            if (!selectedValue) {  
+              this.toastService.presentStdToastr('Please select a reason for reporting.');
+              return false; // Stops the process if no option is selected
+            }
+  
+            // ✅ Pass the selected reportType to the next function
+            this.showReportDetailsForm(selectedValue);
+          }
+        }
+      ]
+    });
+  
+    await alert.present();
+  }
+  
+  async showReportDetailsForm(reportType: string) {
+    console.log("Opening details form for:", reportType); // Debugging output
+  
+    const alert = await this.alertCtrl.create({
+      header: 'Provide More Details',
+      inputs: [
+        {
+          type: 'text', 
+          name: 'message',
+          placeholder: 'Explain why you are reporting (required)'
+        }
+      ],
       buttons: [
         { text: 'CANCEL', role: 'cancel' },
         {
           text: 'SEND',
           cssClass: 'text-danger',
-          handler: val => {
-            const message = val.message;
-            this.channelService.reportChannel(this.channel.id, message).then(
-              (resp: any) => {
-                this.toastService.presentStdToastr(resp.message);
-              },
-              err => {
-                this.toastService.presentStdToastr(err);
-              }
-            );
-          },
-        },
-      ],
+          handler: (data) => {  
+            if (!data.message || data.message.trim() === '') {  
+              this.toastService.presentStdToastr('Please provide details in the message field.');
+              return false; // Prevents submission if no message is entered
+            }
+  
+            console.log("Submitting report:", { reportType, message: data.message }); // Debugging output
+            this.sendReport(reportType, data.message);
+          }
+        }
+      ]
     });
+  
     await alert.present();
   }
+  
+  sendReport(reportType: string, message: string) {
+    console.log("Final report data being sent:", { reportType, message }); // Debugging output
+  
+    this.channelService.reportChannel(this.channel.id, reportType, message).then(
+      (resp: any) => {
+        this.toastService.presentStdToastr('Report submitted successfully.');
+      },
+      err => {
+        this.toastService.presentStdToastr('Error submitting report.');
+      }
+    );
+  }
+  
+
+  
 }
