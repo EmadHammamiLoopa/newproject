@@ -51,7 +51,7 @@ export class PostComponent implements OnInit, OnChanges {
   ngOnInit() {
     this.activatedRoute.queryParams.subscribe(params => {
       if (params.channel) {
-        const channelData = JSON.parse(params.channel);
+        const channelData = typeof params.channel === 'string' ? JSON.parse(params.channel) : params.channel;
         this.channel = new Channel().initialize(channelData);
         if (this.channel.type === 'static_events') {
           // Handle logic specific to static_events channels
@@ -89,7 +89,7 @@ export class PostComponent implements OnInit, OnChanges {
   
   getMediaUrl(post: Post): string {
     if (post.media && post.media.url) {
-      const baseUrl = 'http://127.0.0.1:3300/';
+      const baseUrl = 'https://newbackedn22.onrender.com/';
       const mediaUrl = baseUrl + post.media.url.replace(/\\/g, '/');
       console.log("Generated Media URL:", mediaUrl);  // Debugging output
       return mediaUrl;  // Ensure URL uses forward slashes

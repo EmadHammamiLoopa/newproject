@@ -12,6 +12,7 @@ interface UserSubscription {
 
 
 export class User {
+
   public _id: string;
   private _firstName: string;
   private _lastName: string;
@@ -60,6 +61,7 @@ export class User {
   private _salt: string;
   private _hashed_password: string;
   private _lastSeen: Date | null;  // <-- New property added here
+  private _peerId: string | null;  // ✅ Add peerId property
 
   constructor(
     id: string = '',
@@ -110,6 +112,7 @@ export class User {
     salt: string = '',
     hashed_password: string = '',
     lastSeen: Date | null = null,  // <-- Initialize lastSeen here
+    peerId: string | null = null,  // ✅ Add peerId to constructor
 
   ) {
     this._id = id;
@@ -160,6 +163,7 @@ export class User {
     this._salt = salt;
     this._hashed_password = hashed_password;
     this._lastSeen = lastSeen;  // <-- Assign lastSeen here
+    this._peerId = peerId;  // ✅ Assign peerId
 
   }
 
@@ -205,6 +209,19 @@ export class User {
   get ageVisible(): boolean { return this._ageVisible; }
   get loggedIn(): boolean { return this._loggedIn; }
   get visitProfile(): boolean { return this._visitProfile; }
+
+  get peerId(): string | null {
+    return this._peerId;
+  }
+  public getPeerId(): string | null {
+    return this._peerId;
+}
+
+  // ✅ Setter for peerId
+public setPeerId(peerId: string | null): void {
+    console.log(`🔄 Setting Peer ID: ${peerId}`);
+    this._peerId = peerId;
+}
 
   // Setter methods
   set id(id: string) { this._id = id; }
@@ -393,6 +410,7 @@ export class User {
     this._salt = user.salt || '';
     this._hashed_password = user.hashed_password || '';
     this._lastSeen = user.lastSeen ? new Date(user.lastSeen) : null;  // <-- Initialize lastSeen here
+    this._peerId = user.peerId || null;  // ✅ Assign peerId
 
     if (!this._profileCreated) {
       this._profileCreated = true;
@@ -493,6 +511,7 @@ export class User {
       createdAt: this._createdAt,
       updatedAt: this._updatedAt,
       salt: this._salt,
+      peerId: this._peerId,  // ✅ Include peerId
       hashed_password: this._hashed_password,
       aboutMe: this._aboutMe // Added aboutMe field
     };

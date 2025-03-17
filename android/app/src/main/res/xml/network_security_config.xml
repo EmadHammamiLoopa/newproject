@@ -19,6 +19,7 @@
         </trust-anchors>
     </domain-config>
 
+
     <!-- Optional: Configuration for all IP addresses -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">*.*.*.*</domain> <!-- Matches any IP address -->

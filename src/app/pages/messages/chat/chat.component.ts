@@ -44,6 +44,7 @@ export class ChatComponent implements OnInit {
   user: User;
   authUser: User;
   pageLoading = false;
+  private sendMessageCounter = 0;
 
   allowToChat = false;
   business = false;
@@ -53,7 +54,6 @@ export class ChatComponent implements OnInit {
               private platform: Platform, private uploadFileService: UploadFileService, private webView: WebView,
               private toastService: ToastService, private location: Location, private router: Router, private productService: ProductService, 
               private alertController: AlertController, private socketService: SocketService, private nativeStorage: NativeStorage) {
-    this.socket = SocketService.socket; // Access static member correctly
   }
 
   ngOnInit() {
@@ -65,6 +65,8 @@ export class ChatComponent implements OnInit {
       if (userId) {
         console.log("User ID detected:", userId);
         this.getUserProfile(userId);
+        this.initializeSocket(userId); // Pass userId directly
+
       }
     });
   
@@ -86,7 +88,6 @@ export class ChatComponent implements OnInit {
     this.pageLoading = true;
     this.getUserId();
     if (this.authUser && this.authUser.id) {
-      this.initializeSocket();
       this.route.paramMap.subscribe(params => {
         console.log("user params..................detected:", params);
 
@@ -122,38 +123,37 @@ export class ChatComponent implements OnInit {
 
   getAuthUser() {
     this.pageLoading = true;
-    this.nativeStorage.getItem('user')
-      .then(
-        user => {
-          if (user) {
-            this.authUser = new User().initialize(user);
-            console.log("Authenticated user data fetched and stored:", this.authUser);
-            this.initializeSocket();
-          } else {
-            this.fallbackToLocalStorage();
-          }
-        },
-        err => {
+    this.nativeStorage.getItem('user').then(
+      (user) => {
+        if (user) {
+          this.authUser = new User().initialize(user);
+          console.log("✅ Authenticated user:", this.authUser);
+          this.getUserId();
+        } else {
           this.fallbackToLocalStorage();
         }
-      );
+      },
+      (err) => this.fallbackToLocalStorage()
+    );
   }
   
-
   fallbackToLocalStorage() {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (user) {
         this.authUser = new User().initialize(user);
-        this.initializeSocket();
+        console.log("✅ Loaded from localStorage:", this.authUser);
         this.getUserId();
       } else {
+        console.error("❌ No user data found.");
         this.pageLoading = false;
       }
     } catch (err) {
+      console.error("❌ Error parsing localStorage user data:", err);
       this.pageLoading = false;
     }
   }
+  
 
   handleUserInitError() {
     this.pageLoading = false;
@@ -213,14 +213,36 @@ export class ChatComponent implements OnInit {
   
   
   
-
-  initializeSocket() {
-    if (this.socket && this.authUser && this.authUser.id) {
-      this.page = 0;
-      this.socket.emit('connect-user', this.authUser.id);
-      this.initSocketListeners();
+  async initializeSocket(userId: string) {
+    if (!userId) {
+      console.error("❌ User ID missing, cannot initialize WebSocket.");
+      return;
+    }
+  
+    if (this.socket) {
+      console.warn("⚠️ WebSocket already initialized. Skipping reinitialization.");
+      return;
+    }
+  
+    try {
+      await SocketService.initializeSocket(userId);
+      this.socket = await SocketService.getSocket(); // Ensure it's initialized
+  
+      if (!this.socket) {
+        console.error("❌ WebSocket is still not initialized. Aborting.");
+        return;
+      }
+  
+      console.log("✅ WebSocket instance retrieved:", this.socket.id);
+      this.socket.emit('connect-user', userId);
+      this.initSocketListeners(); // Ensure event listeners are set up
+    } catch (error) {
+      console.error("❌ WebSocket initialization failed:", error);
     }
   }
+  
+  
+  
 
   scrollToBottom() {
     this.content.scrollToPoint(0, 1000 * 1000);
@@ -230,52 +252,67 @@ export class ChatComponent implements OnInit {
     this.getUserProfile(id);
   }
 
-  getMessages(event) {
-    this.messageService.indexMessages(this.user?.id || this.productId, this.page++)
-      .then(
-        (resp: any) => {
-          this.pageLoading = false;
-          if (!event) {
-            this.messages = [...resp.data.messages.map(message => new Message().initialize(message)), ...this.messages];
-          } else {
-            event.target.complete();
-            this.messages = [...this.messages, ...resp.data.messages.map(message => new Message().initialize(message))];
-          }
+  async getMessages(event?) {
+    if (!this.socket) {
+      console.warn("⚠️ WebSocket is not ready. Trying to reinitialize...");
+      if (this.user?.id) {
+        await this.initializeSocket(this.user.id);
+      } else {
+        console.error("❌ Cannot reinitialize WebSocket: User ID missing.");
+        return;
+      }
+    }
   
-          if (!resp.data.more) {
-            this.infScroll.disabled = true;
-          }
+
   
-          this.allowToChat = resp.data.allowToChat;
+    if (this.pageLoading) {
+      console.warn("⚠️ Already loading messages, skipping request.");
+      this.pageLoading = false; // ✅ Ensure loading state is updated
+
+      return;
+    }
+    
+    this.pageLoading = true;
+    console.log("📩 Fetching messages...");
   
-          // Use the productId from query parameters if available
-          if (this.productId) {
-            this.getProductDetails(this.productId);
-          } else {
-            this.messages.forEach(message => {
-              if (this.isProductMessage(message)) {
-                console.log('Product ID:', message.productId); // Log product ID
-                if (message.product) {
-                  // Initialize product details if already populated
-                  this.product = new Product().initialize(message.product);
-                } else {
-                  // Fetch product details if not populated
-                  this.getProductDetails(message.productId);
-                }
-              } else {
-                const friendId = message.from === this.authUser.id ? message.to : message.from; // Determine the friend's ID
-                console.log('Friend ID:', friendId); // Log friend ID
-                this.getFriendInfo(friendId); // Use the determined friend's ID
-              }
-            });
-          }
-        },
-        err => {
-          this.pageLoading = false;
-          this.toastService.presentStdToastr(err);
+    try {
+      const resp: any = await this.messageService.indexMessages(this.user?.id || this.productId, this.page++);
+      
+      if (!resp.data?.messages?.length) {
+        console.log("✅ No new messages found.");
+        this.pageLoading = false;
+        return;
+      }
+  
+      // Ensure no duplicate messages are pushed
+      const newMessages = resp.data.messages.map(msg => new Message().initialize(msg));
+      const existingMessageIds = new Set(this.messages.map(msg => msg.id));
+  
+      newMessages.forEach(msg => {
+        if (!existingMessageIds.has(msg.id)) {
+          this.messages.unshift(msg);
         }
-      );
+      });
+  
+      console.log(`✅ Messages loaded: ${this.messages.length}`);
+      this.pageLoading = false;
+  
+      if (!resp.data.more) {
+        this.infScroll.disabled = true;
+      }
+  
+      if (event) {
+        event.target.complete();
+      }
+    } catch (error) {
+      console.error("❌ Error loading messages:", error);
+      this.toastService.presentStdToastr(error);
+    }
   }
+  
+  
+  
+  
   
   
   
@@ -305,39 +342,40 @@ export class ChatComponent implements OnInit {
   }
 
   initSocketListeners() {
-    if (this.socket) {
-      // Listen for incoming messages
-      this.socket.on('new-message', (message) => {
-        if (this.user && message.from == this.user.id && !this.checkMessageExisting(message)) {
-          this.messages.push(new Message().initialize(message));
-          this.changeDetection.detectChanges();
-          setTimeout(() => {
-            this.scrollToBottom();
-          }, 200);
-        }
-      });
-  
-      // Listen for video call requests
-      this.socket.on('video-call-request', (message) => {
-        if (this.user && message.from == this.user.id) {
-          // Add the video call request message to the chat
-          this.messages.push(new Message().initialize({
-            text: `${this.user.fullName} has requested a video call.`,
-            createdAt: new Date(),
-            type: 'video-call-request'
-          }));
-  
-          // Optional: You can display a toast or notification here
-          this.toastService.presentStdToastr(`${this.user.fullName} has requested a video call.`);
-          
-          this.changeDetection.detectChanges();
-          setTimeout(() => {
-            this.scrollToBottom();
-          }, 200);
-        }
-      });
+    if (!this.socket) {
+      console.error("❌ WebSocket not initialized. Cannot listen for messages.");
+      return;
     }
+  
+    this.socket.on('new-message', (message) => {
+      console.log("📩 New message received from WebSocket:", message);
+  
+      if (typeof message === "string") {
+        message = JSON.parse(message); // Ensure correct parsing
+      }
+      if (message.type === 'video-call-request') {
+        console.log("📢 Video call request received:", message);
+        // Show a notification or update the UI to indicate a video call request
+        this.toastService.presentStdToastr(`${message.from} has requested a video call.`);
+      }
+
+      // ✅ Find the existing message and update its status instead of adding a duplicate
+      const existingMsg = this.messages.find(msg => msg.text === message.text && msg.from === message.from);
+      if (existingMsg) {
+        console.log("✅ Updating message status to 'sent':", message);
+        existingMsg.state = 'sent'; // ✅ Change status from "sending" (⏳) to "sent" (✅)
+        existingMsg.id = message.id; // Assign real ID from backend
+        this.changeDetection.detectChanges();
+      } else {
+        console.log("🆕 New message detected, adding to UI:", message);
+        this.messages.push(new Message().initialize(message));
+        this.changeDetection.detectChanges();
+      }
+    });
   }
+  
+  
+  
   
 
   resendMessage(message) {
@@ -369,22 +407,17 @@ export class ChatComponent implements OnInit {
 }
 
 
-async showSubscriptionAlert(usedChats: number, totalChats: number) {
+async showSubscriptionAlert(usedChats = 0, totalChats = 3) {
   const remainingChats = totalChats - usedChats;
   const alert = await this.alertController.create({
     header: 'Free Chat Limit Reached',
-    message: `You have used ${usedChats} out of ${totalChats} free chats for today. You can subscribe to continue chatting without limits.`,
+    message: `You have used ${usedChats} out of ${totalChats} free chats today. Subscribe for unlimited chats.`,
     buttons: [
-      {
-        text: 'Cancel',
-        role: 'cancel'
-      },
+      { text: 'Cancel', role: 'cancel' },
       {
         text: 'Subscribe Now',
         cssClass: 'text-danger',
-        handler: () => {
-          this.router.navigateByUrl('/tabs/subscription');
-        }
+        handler: () => this.router.navigateByUrl('/tabs/subscription'),
       }
     ]
   });
@@ -393,19 +426,76 @@ async showSubscriptionAlert(usedChats: number, totalChats: number) {
 }
 
 
-  sendMessage(message, ind) {
-    const payload = {
-      from: message.from,
-      to: message.to,
-      text: message.text,
-      state: 'sent',
-      image: this.imageFile ? this.image : null,
-      type: message.type, // Include type here
-      productId: this.productId || null // Add productId if it's a product message
-    };
-  
-    this.socket.emit('send-message', payload, this.imageFile, ind);
+async sendMessage(message, ind) {
+  if (!this.socket) {
+    console.warn("⚠️ WebSocket is not ready. Trying to retrieve...");
+    this.socket = await SocketService.getSocket();
+
+    if (!this.socket) {
+      console.error("❌ WebSocket is still not available. Aborting send.");
+      return;
+    }
   }
+
+
+  const payload = new Message();
+  payload.id = ''; // Let the backend generate an ID
+  payload.from = this.authUser.id;
+  payload.to = this.user.id;
+  payload.text = message.text || ''; // Ensure text is not undefined
+  payload.state = 'sending'; // Mark as "sending" ⏳
+  payload.image = this.imageFile ? this.image : null;
+  payload.type = message.type || 'text';
+  payload.productId = this.productId || null;
+  payload.createdAt = new Date();
+
+  console.log("📤 Sending message:", payload);
+
+  // ✅ Check if a message with the same text already exists (prevent duplicates)
+  const existingMsg = this.messages.find(msg => msg.text === payload.text && msg.from === payload.from);
+  if (!existingMsg) {
+    this.messages.push(payload);
+    this.changeDetection.detectChanges();
+  } else {
+    console.warn("⚠️ Duplicate message detected, skipping push:", payload);
+  }
+
+  // 🔥 Emit WebSocket event and wait for acknowledgment
+  this.socket.emit('send-message', payload, (ack) => {
+    console.log("📩 WebSocket acknowledgment received:", ack);
+
+    if (ack?.success) {
+      console.log("✅ Message sent successfully:", ack.message);
+
+      // ✅ Find and update the existing message instead of adding a new one
+      const msgToUpdate = this.messages.find(msg => msg.text === payload.text && msg.from === payload.from);
+      if (msgToUpdate) {
+        msgToUpdate.state = 'sent'; // ✅ Update status to "sent" (✅)
+        msgToUpdate.id = ack.message.id; // Assign backend-generated ID
+        this.changeDetection.detectChanges();
+      } else {
+        console.warn("⚠️ Sent message not found in UI, skipping update.");
+      }
+
+    } else {
+      payload.state = 'failed'; // ❌ Mark as failed
+      console.warn("⚠️ Message failed, retrying:", payload);
+      setTimeout(() => this.sendMessage(payload, ind), 3000);
+    }
+    this.changeDetection.detectChanges();
+  });
+
+  // Reset input fields
+  this.messageText = "";
+  this.image = null;
+  this.imageFile = null;
+}
+
+
+
+
+
+
   
   
   addMessage() {
@@ -569,8 +659,8 @@ showUproduct() {
   }
 
   nonFriendsChatEnabled() {
-    console.log('Friend status:', this.user?.isFriend);
-    console.log('Messages count:', this.messages.length);
+   // console.log('Friend status:', this.user?.isFriend);
+   // console.log('Messages count:', this.messages.length);
   
     if (this.user && this.user.isFriend) {
       return true; // No limit for friends
@@ -579,7 +669,7 @@ showUproduct() {
     return this.messages.length < 10; // Limit for non-friends
   }
   
-  requestVideoCall() {
+  async requestVideoCall() {
     // Ensure conversation is started and the user can still send messages (if non-friend)
     if (!this.conversationStarted() || !this.nonFriendsChatEnabled()) {
       console.log("Cannot request video call: conversation not started or message limit reached.");
@@ -589,6 +679,17 @@ showUproduct() {
     if (!this.authUser || !this.user) {
       console.log("Missing user information.");
       return;
+    }
+  
+    // Ensure the socket is initialized
+    if (!this.socket) {
+      console.warn("⚠️ WebSocket is not ready. Trying to reinitialize...");
+      if (this.user?.id) {
+        await this.initializeSocket(this.user.id);
+      } else {
+        console.error("❌ Cannot reinitialize WebSocket: User ID missing.");
+        return;
+      }
     }
   
     const videoCallMessage = new Message();
@@ -613,7 +714,6 @@ showUproduct() {
     this.index++;
     this.scrollToBottom();
   }
-  
   
   
   canRequestVideoCall(): boolean {

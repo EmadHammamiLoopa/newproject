@@ -92,7 +92,7 @@ export class ProductComponent implements OnInit {
         this.product = new Product(resp.data);
         this.product.photos = this.product.photos.map(photo => ({
           ...photo,
-          url: `http://127.0.0.1:3300/public${photo.path}` // Construct the full URL for each photo
+          url: `https://newbackedn22.onrender.com/public${photo.path}` // Construct the full URL for each photo
         }));
         console.log(this.product);
         this.page++;

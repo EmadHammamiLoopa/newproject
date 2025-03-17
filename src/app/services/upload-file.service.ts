@@ -78,6 +78,6 @@ export class UploadFileService {
     const formData = new FormData();
     formData.append('avatars', file); // Ensure the field name matches the backend expectation
 
-    return this.http.put(`http://127.0.0.1:3300/api/v1/user/${userId}/avatar`, formData);
+    return this.http.put(`https://newbackedn22.onrender.com/api/v1/user/${userId}/avatar`, formData);
   }
 }

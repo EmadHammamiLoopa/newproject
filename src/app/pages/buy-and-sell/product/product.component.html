@@ -33,7 +33,7 @@
     <ion-slides pager="true">
       <ion-slide *ngFor="let photo of product.photos">
         <div class="product-image-wrapper">
-          <img [src]="'http://127.0.0.1:3300' + photo.path" class="product-image" alt="Product Image">
+          <img [src]="'https://newbackedn22.onrender.com' + photo.path" class="product-image" alt="Product Image">
           <!-- Conditionally show 'Sold' stamp when the product is marked as sold -->
           <div class="sold-stamp" *ngIf="product.sold">
             <img src="assets/images/sold.png" alt="Sold Stamp">

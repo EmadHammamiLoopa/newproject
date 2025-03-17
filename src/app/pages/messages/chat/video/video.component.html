@@ -1,6 +1,7 @@
 <app-loader *ngIf="pageLoading"></app-loader>
 
 <ion-content color="dark" *ngIf="user">
+  <!-- Partner Video -->
   <video
     id="partner-video"
     (click)="swapVideo('my-video')"
@@ -10,6 +11,7 @@
     [class.d-none]="!answered"
   ></video>
 
+  <!-- My Video -->
   <video
     id="my-video"
     (click)="swapVideo('partner-video')"
@@ -19,6 +21,7 @@
     [ngClass]="{'second-video': topVideoFrame === 'my-video', 'main-video': topVideoFrame != 'my-video'}"
   ></video>
 
+  <!-- Call Status UI -->
   <div class="call-info pb-3" *ngIf="!answered">
     <div>
       <div class="w-100 mt-3 d-flex justify-content-center">
@@ -33,39 +36,47 @@
     </div>
   </div>
 
+  <!-- Control Buttons -->
   <div class="buttons-div w-100 mb-3">
+    
+    <!-- First Row: Call, Answer, Cancel -->
     <ion-row class="mb-4">
-      <ion-col [size]="answer && !answered ? '6' : '12'" class="d-flex justify-content-center">
-        <ion-fab-button [disabled]="!myEl || !myEl.srcObject" (click)="closeCall()" color="danger">
-          <i class="fas fa-phone-slash"></i>
+      <ion-col *ngIf="!answered && !answer" size="6" class="d-flex justify-content-center">
+        <ion-fab-button (click)="call()" color="primary">
+          <i class="fas fa-video"></i> <!-- Start Call -->
         </ion-fab-button>
       </ion-col>
-      
+
+      <ion-col [size]="answer && !answered ? '6' : '12'" class="d-flex justify-content-center">
+        <ion-fab-button [disabled]="!myEl || !myEl.srcObject" (click)="closeCall()" color="danger">
+          <i class="fas fa-phone-slash"></i> <!-- End Call -->
+        </ion-fab-button>
+      </ion-col>
+
       <ion-col *ngIf="answer && !answered" size="6" class="d-flex justify-content-center">
         <ion-fab-button (click)="answerCall()" color="success">
-          <i class="fas fa-phone"></i>
+          <i class="fas fa-phone"></i> <!-- Answer Call -->
         </ion-fab-button>
       </ion-col>
     </ion-row>
+
+    <!-- Second Row: Mic, Camera, Switch Camera -->
     <ion-row *ngIf="answered || !answer">
-      <ion-col size="6" class="d-flex justify-content-center">
+      <ion-col size="4" class="d-flex justify-content-center">
         <ion-fab-button (click)="toggleAudio()" [color]="audioEnabled ? 'light' : 'danger'">
-          <span *ngIf="audioEnabled">
-            <i class="fas fa-microphone"></i>
-          </span>
-          <span *ngIf="!audioEnabled">
-            <i class="fas fa-microphone-slash"></i>
-          </span>
+          <i class="fas" [ngClass]="{'fa-microphone': audioEnabled, 'fa-microphone-slash': !audioEnabled}"></i>
         </ion-fab-button>
       </ion-col>
-      <ion-col size="6" class="d-flex justify-content-center">
+      
+      <ion-col size="4" class="d-flex justify-content-center">
         <ion-fab-button (click)="toggleCamera()" [color]="cameraEnabled ? 'light' : 'danger'">
-          <span *ngIf="cameraEnabled">
-            <i class="fas fa-video"></i>
-          </span>
-          <span *ngIf="!cameraEnabled">
-            <i class="fas fa-video-slash"></i>
-          </span>
+          <i class="fas" [ngClass]="{'fa-video': cameraEnabled, 'fa-video-slash': !cameraEnabled}"></i>
+        </ion-fab-button>
+      </ion-col>
+
+      <ion-col size="4" class="d-flex justify-content-center">
+        <ion-fab-button (click)="toggleCameraDirection()" color="light">
+          <i class="fas fa-sync-alt"></i> <!-- Switch Camera -->
         </ion-fab-button>
       </ion-col>
     </ion-row>

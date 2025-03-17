@@ -4,6 +4,7 @@ import { DataService } from './data.service';
 import { Injectable } from '@angular/core';
 import { Platform } from '@ionic/angular';
 import { HttpClient } from '@angular/common/http';
+import { throwError, catchError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -39,10 +40,10 @@ export class ChannelService extends DataService {
       page: page.toString(),
       search,
     }).toString();
-  console.log("parametrerssssssssss", params);
+  
     return this.sendRequest({
-      method: 'post',
-      url: `/citychannels?${params}`, // Manually append query parameters to the URL
+      method: 'get',
+      url: `/citychannels?${params}` // Append query parameters to the URL
     });
   }
   
@@ -50,22 +51,29 @@ export class ChannelService extends DataService {
   
   
   followedChannels(page: number, search: string) {
-    console.log('Requesting followed channels with:', { page, search });
+    const params = new URLSearchParams({
+      page: page.toString(),
+      search,
+    }).toString();
   
     return this.sendRequest({
       method: 'get',
-      url: '/followed',
-      data: { page: page.toString(), search },
+      url: `/followed?${params}` // Append query parameters to the URL
     });
   }
   
   
 
   exploreChannels(page: number, search: string, level: 'city' | 'country' | 'global') {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      search,
+      level,
+    }).toString();
+  
     return this.sendRequest({
       method: 'get',
-      url: '/explore',
-      data: { page: page.toString(), search, level }  // Pass the exploration level as a query parameter
+      url: `/explore?${params}` // Append query parameters to the URL
     });
   }
   
@@ -79,7 +87,11 @@ export class ChannelService extends DataService {
     })
   }
 
-  store(data){
+  store(data: FormData) {
+    data.forEach((value, key) => {
+      console.log(`FormData key: ${key}, value:`, value);
+    });
+  
     return this.sendRequest({
       method: 'post',
       url: '',
@@ -95,35 +107,27 @@ export class ChannelService extends DataService {
     });
   }
 
-  getPosts(id: string, page: number){
+  getPosts(id: string, page: number) {
+    const params = new URLSearchParams({
+      page: page.toString(),
+    }).toString();
+  
     return this.sendRequest({
       method: 'get',
-      url: '/' + id + '/getposts/',
-      data: {page: page.toString()}
-    })
-  }
-
-  storePost(id: string, data) {
-    // Log the postId to confirm it's correct
-    console.log("Sending post to post ID:", id);
-
-    // Check the form data contents
-    if (data instanceof FormData) {
-        data.forEach((value, key) => {
-            console.log(`FormData key: ${key}, value:`, value);
-        });
-    } else {
-        console.log("Data is not FormData:", data);
-    }
-
-    // Send the request
-    return this.sendRequest({
-        method: 'post',
-        url: '/' + id + '/post', // Make sure `id` is a valid postId
-        data
+      url: `/${id}/getposts?${params}` // Append query parameters to the URL
     });
-
   }
+
+  storePost(id: string, data: FormData) {
+    return this.httpClient.post(`${this.apiUrl}/${id}/post`, data).pipe(
+      catchError((error) => {
+        console.error('Error storing post:', error);
+        return throwError('Error storing post');
+      })
+    );
+  }
+
+
   
   deletePost(id: string){
     return this.sendRequest({
@@ -139,26 +143,14 @@ export class ChannelService extends DataService {
       data: {vote}
     })
   }
-  storeComment(id: string, data) {
-    // Log the postId to confirm it's correct
-    console.log("Sending comment to post ID:", id);
-
-    // Check the form data contents
-    if (data instanceof FormData) {
-        data.forEach((value, key) => {
-            console.log(`FormData key: ${key}, value:`, value);
-        });
-    } else {
-        console.log("Data is not FormData:", data);
-    }
-
-    // Send the request
-    return this.sendRequest({
-        method: 'post',
-        url: '/post/' + id + '/comment', // Make sure `id` is a valid postId
-        data
-    });
-}
+  storeComment(id: string, data: FormData) {
+    return this.httpClient.post(`${this.apiUrl}/post/${id}/comment`, data).pipe(
+      catchError((error) => {
+        console.error('Error storing comment:', error);
+        return throwError('Error storing comment');
+      })
+    );
+  }
 
 
 

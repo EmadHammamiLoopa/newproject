@@ -99,7 +99,7 @@ export class ProductFormComponent implements OnInit {
   
     this.productImages = product.photos?.length
       ? product.photos.map(photo => ({
-        url: 'http://127.0.0.1:3300/public' + photo.path,
+        url: 'https://newbackedn22.onrender.com/public' + photo.path,
         file: new Blob(),  // Dummy blob, to be updated with correct file
           name: photo.path.split('/').pop()
         }))

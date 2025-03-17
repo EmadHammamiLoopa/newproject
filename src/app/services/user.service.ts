@@ -127,6 +127,34 @@ getCurrentUserId(): string | null {
     return this.http.get(`${this.apiUrl}/user/friends`).toPromise();
   }
 
+  getPeerId(userId: string) {
+    const url = `${this.apiUrl}/${userId}/peer`;
+    console.log('🔗 Fetching peerId from URL:', url); // Log the URL
+    return this.http.get<{ 
+      success: boolean; 
+      message: string; 
+      userId: string; 
+      peerId?: string 
+    }>(url);
+  }
+  
+  sendPeerIdToBackend(userId: string, peerId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        this.http.post(`${this.apiUrl}/${userId}/peer`, { peerId }, {
+            headers: { 'Content-Type': 'application/json' }
+        }).subscribe(
+            response => {
+                console.log("✅ Peer ID successfully sent to backend:", response);
+                resolve();
+            },
+            error => {
+                console.error("❌ Error sending Peer ID to backend:", error);
+                reject(error);
+            }
+        );
+    });
+}
+
 
   follow(id: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/follow/${id}`, {});
@@ -140,7 +168,7 @@ getCurrentUserId(): string | null {
     });
 
     console.log(`Fetching friends for page: ${page}`);
-    return this.http.get(`${this.apiUrl}/friends`, { 
+    return this.http.get(`${this.apiUrl}/friends`, { // ✅ Ensure the correct URL
       headers: headers,
       params: { page: page.toString() } 
     });

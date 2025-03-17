@@ -69,7 +69,7 @@ export class MockCordovaService {
   }
 
   uploadAvatar(userId: string, formData: FormData): Observable<any> {
-    const url = `http://127.0.0.1:3300/api/v1/user/${userId}/avatar`;
+    const url = `https://newbackedn22.onrender.com/api/v1/user/${userId}/avatar`;
     console.log('Uploading avatar to URL:', url);
   
     return this.http.put(url, formData).pipe(

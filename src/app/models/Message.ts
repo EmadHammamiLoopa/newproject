@@ -83,10 +83,19 @@ export class Message {
   set createdAt(createdAt: Date) {
     this._createdAt = createdAt;
   }
-  set image(image: string) {
-    if (!image || image === 'undefined') this._image = null;
-    else this._image = (!image.includes(constants.DOMAIN_URL) ? constants.DOMAIN_URL : '') + image;
+  set image(image: any) {
+    if (!image || image === 'undefined' || image === 'null') {
+      this._image = null;
+    } else if (typeof image === 'string') {
+      this._image = image.includes(constants.DOMAIN_URL) ? image : constants.DOMAIN_URL + image;
+    } else if (typeof image === 'object' && image.path) {
+      // If `image` is an object, use its `path`
+      this._image = constants.DOMAIN_URL + image.path;
+    } else {
+      this._image = null; // Default case if image is neither a string nor an object
+    }
   }
+  
   set type(type: string) {
     this._type = type;
   }

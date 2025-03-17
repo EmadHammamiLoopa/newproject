@@ -256,7 +256,7 @@ storeComment() {
       console.log(`FormData key: ${key}, value:`, value);
   });
 
-  this.channelService.storeComment(this.post.id, formData).then(
+  this.channelService.storeComment(this.post.id, formData).subscribe(
     (resp: any) => {
       console.log('Comment added successfully:', resp);
 

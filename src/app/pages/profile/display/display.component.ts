@@ -14,6 +14,7 @@ import { DropDownComponent } from '../../drop-down/drop-down.component';
 import { UploadFileService } from 'src/app/services/upload-file.service';
 import { WebView } from '@ionic-native/ionic-webview/ngx';
 import { Camera } from '@ionic-native/camera/ngx';
+import { JwtHelperService } from '@auth0/angular-jwt';
 
 @Component({
   selector: 'app-display',
@@ -31,6 +32,7 @@ export class DisplayComponent implements OnInit {
   userId: string;
   mainAvatar: string;
   imageLoading = false;
+  jwtHelper = new JwtHelperService();
 
   constructor(
     private auth: AuthService, private userService: UserService, private requestService: RequestService,
@@ -51,79 +53,114 @@ export class DisplayComponent implements OnInit {
     this.getUserId();
   }
 
-  getUserId() {
-    this.route.paramMap.subscribe(params => {
-      this.userId = params.get('id');
-      console.log('Route userId:', this.userId);
+  async getUserId() {
+    this.route.paramMap.subscribe(async (params) => {
+      let userIdFromRoute = params.get('id');
+      console.log('🔹 Route userId:', userIdFromRoute);
   
-      const storedUser = JSON.parse(localStorage.getItem('user'));
-      if (!this.userId || this.userId === 'null') {
-        if (storedUser && storedUser._id) {
-          this.userId = storedUser._id;
-          this.myProfile = true;
-          console.log('Using stored userId:', this.userId);
-          this.loadUserData();
+      let storedUser = JSON.parse(localStorage.getItem('user'));
+      let token: string | null = null;
+  
+      // ✅ Case 1: Use userId from Route if valid
+      if (userIdFromRoute && userIdFromRoute !== 'null') {
+        this.userId = userIdFromRoute;
+        console.log("📌 Using userId from URL:", this.userId);
+      } 
+      
+      // ✅ Case 2: Use userId from Local Storage if available
+      else if (storedUser && storedUser._id) {
+        this.userId = storedUser._id;
+        console.log("📌 Using userId from LocalStorage:", this.userId);
+      } 
+      
+      // ✅ Case 3: Extract userId from JWT Token
+      else {
+        console.log("🚀 No userId found, checking token...");
+        
+        if (this.platform.is('cordova')) {
+          try {
+            token = await this.nativeStorage.getItem('token');
+            console.log('🔹 Auth token retrieved from NativeStorage:', token);
+          } catch (error) {
+            console.warn('⚠️ Failed to retrieve auth token from NativeStorage:', error);
+          }
         } else {
-          console.error('No user ID found in route or local storage');
-          this.getAuthUser();
+          token = localStorage.getItem('token');
+          console.log('🔹 Auth token retrieved from localStorage:', token);
         }
-      } else {
-        if (storedUser && storedUser._id === this.userId) {
-          this.myProfile = true;
-          console.log('Viewing own profile with userId:', this.userId);
+  
+        if (token) {
+          const decodedToken = this.jwtHelper.decodeToken(token);
+          this.userId = decodedToken?._id || null;
+  
+          if (this.userId) {
+            console.log("📌 Extracted userId from token:", this.userId);
+            
+            // Store userId in LocalStorage if missing
+            if (!storedUser) {
+              storedUser = { _id: this.userId };
+            } else {
+              storedUser._id = this.userId;
+            }
+            localStorage.setItem('user', JSON.stringify(storedUser));
+            console.log("✅ Stored userId in LocalStorage:", storedUser);
+          } else {
+            console.error("❌ Failed to extract userId from token.");
+          }
         } else {
-          this.myProfile = false;
-          console.log('Viewing another user profile with userId:', this.userId);
+          console.error("❌ No auth token found in storage.");
         }
-        this.loadUserData();
       }
+  
+      // ❌ Redirect if still no valid userId
+      if (!this.userId) {
+        console.error("❌ No userId found, redirecting to login...");
+        this.router.navigate(['/login']);
+        return;
+      }
+  
+      this.loadUserData();
     });
   }
   
 
+  
+
   loadUserData() {
-    if (this.myProfile) {
-      this.userService.getUserProfile(this.userId).subscribe({
-        next: (user) => {
-          if (user && user._id) {
-            this.user = user;
-            this.setMainAvatar();
-            this.filterAvatars();  // Call filterAvatars here
-            this.pageLoading = false;
-            console.log('Loaded user data for own profile:', this.user);
+    console.log("🔄 Loading user data...");
+    
+    this.userService.getUserProfile(this.userId).subscribe({
+      next: (user) => {
+        if (user && user._id) {
+          this.user = user;
+          
+          // ✅ Check if this user is the authenticated user
+          let storedUser = JSON.parse(localStorage.getItem('user'));
+          if (storedUser && storedUser._id === this.userId) {
+            this.myProfile = true;
+            console.log("✅ This is my profile.");
           } else {
-            console.error('User data is undefined or missing _id for own profile:', user);
-            this.handleUserDataError();
+            this.myProfile = false;
+            console.log("ℹ️ Viewing someone else's profile.");
           }
-          this.changeDetectorRef.detectChanges(); // Trigger change detection
-        },
-        error: (err) => {
-          console.error('Error fetching user profile for own profile:', err);
+  
+          this.setMainAvatar();
+          this.filterAvatars();
           this.pageLoading = false;
+          console.log('✅ Loaded user data:', this.user);
+        } else {
+          console.error('❌ User data is undefined or missing _id:', user);
           this.handleUserDataError();
         }
-      });
-    } else {
-      this.userService.getUserProfile(this.userId).subscribe({
-        next: (user) => {
-          if (user && user._id) {
-            this.user = user;
-            this.checkIfFriend(); // Check if the user is a friend
-            this.pageLoading = false;
-            console.log('Loaded user data for another profile:', this.user);
-          } else {
-            console.error('User data is undefined or missing _id for another profile:', user);
-            this.handleUserDataError();
-          }
-          this.changeDetectorRef.detectChanges(); // Trigger change detection
-        },
-        error: (err) => {
-          console.error('Error fetching user profile for another profile:', err);
-          this.pageLoading = false;
-          this.handleUserDataError();
-        }
-      });
-    }
+  
+        this.changeDetectorRef.detectChanges(); // Trigger change detection
+      },
+      error: (err) => {
+        console.error('❌ Error fetching user profile:', err);
+        this.pageLoading = false;
+        this.handleUserDataError();
+      }
+    });
   }
   
 
@@ -136,30 +173,82 @@ export class DisplayComponent implements OnInit {
     }
   }
 
-  getAuthUser() {
-    this.userService.getUserProfile('me').subscribe({
-      next: (user) => {
-        if (user && user._id) {
-          this.userId = user._id;
-          this.myProfile = true;
-          this.user = user;
-          this.setMainAvatar();
+  async getAuthUser() {
+    try {
+      let token: string | null = null;
+  
+      // Retrieve token from storage
+      if (this.platform.is('cordova')) {
+        try {
+          token = await this.nativeStorage.getItem('token'); 
+          console.log('🔹 Auth token retrieved from NativeStorage:', token);
+        } catch (error) {
+          console.warn('⚠️ Failed to retrieve auth token from NativeStorage:', error);
+        }
+      } else {
+        token = localStorage.getItem('token'); 
+        console.log('🔹 Auth token retrieved from localStorage:', token);
+      }
+  
+      if (!token) {
+        console.error('❌ No auth token found. Redirecting to login...');
+        this.router.navigate(['/login']);
+        return;
+      }
+  
+      // Decode token to get user ID
+      const decodedToken = this.jwtHelper.decodeToken(token);
+      console.log('🔹 Decoded Token:', decodedToken);
+  
+      if (!decodedToken || !decodedToken._id) {
+        console.error('❌ Failed to extract userId from token.');
+        this.router.navigate(['/login']);
+        return;
+      }
+  
+      this.userId = decodedToken._id;
+      console.log('✅ Extracted userId from token:', this.userId);
+  
+      // Store userId in LocalStorage if missing
+      let storedUser = JSON.parse(localStorage.getItem('user')) || {};
+      if (!storedUser._id) {
+        storedUser._id = this.userId;
+        localStorage.setItem('user', JSON.stringify(storedUser));
+        console.log('✅ Stored userId in LocalStorage:', storedUser);
+      }
+  
+      // Fetch authenticated user profile
+      this.userService.getUserProfile(this.userId).subscribe({
+        next: (user) => {
+          if (user && user._id) {
+            this.user = user;
+            this.myProfile = true; // ✅ Ensure myProfile is set
+            this.setMainAvatar();
+            this.pageLoading = false;
+            console.log('✅ Loaded authenticated user data:', this.user);
+            this.loadUserData();
+          } else {
+            console.error('❌ Authenticated user data is undefined or missing _id:', user);
+            this.handleUserDataError();
+          }
+          this.changeDetectorRef.detectChanges();
+        },
+        error: (err) => {
+          console.error('❌ Error fetching authenticated user profile:', err);
           this.pageLoading = false;
-          console.log('Loaded authenticated user data:', this.user);
-          this.loadUserData();
-        } else {
-          console.error('Authenticated user data is undefined or missing _id:', user);
           this.handleUserDataError();
         }
-        this.changeDetectorRef.detectChanges(); // Trigger change detection
-      },
-      error: (err) => {
-        console.error('Error fetching authenticated user profile:', err);
-        this.pageLoading = false;
-        this.handleUserDataError();
-      }
-    });
+      });
+  
+    } catch (error) {
+      console.error("❌ Unexpected error retrieving auth token:", error);
+      this.router.navigate(['/login']);
+    }
   }
+  
+
+  
+  
   
 
   checkUserStatus() {

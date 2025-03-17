@@ -16,6 +16,7 @@ import { SocketService } from './services/socket.service';
 import { ListSearchComponent } from '../app/pages/list-search/list-search.component';
 import { ToastService } from './services/toast.service'; // Import ToastService
 import { RequestService } from './services/request.service';
+import { Socket } from 'socket.io-client';
 
 @Component({
   selector: 'app-root',
@@ -23,7 +24,7 @@ import { RequestService } from './services/request.service';
   styleUrls: ['app.component.scss'],
 })
 export class AppComponent {
-  socket = SocketService.socket;
+  socket: Socket | null = null; // Use the Socket type from socket.io-client
   user: User;
   audio: HTMLAudioElement;
   newRequestsCount: number = 0;
@@ -55,8 +56,12 @@ export class AppComponent {
     private modalCtrl: ModalController,
     private changeDetectorRef: ChangeDetectorRef,
     private toastService: ToastService, // Inject ToastService
-    private requestService: RequestService
+    private requestService: RequestService,
+    private socketService: SocketService // ✅ Inject SocketService
+
   ) {
+
+    
     this.initializeApp();
   }
 
@@ -76,15 +81,16 @@ export class AppComponent {
       } else {
         console.log('Running in browser, Cordova not available');
       }
-      this.getUserData();
+  
+      this.getUserData();  // ✅ WebSocket initialization is moved to getUserData()
       this.getJsonData();
-
+  
       setTimeout(() => {
         this.showSplash = false;
-      }, 8000); // Adjust the duration to match the length of your animation
+      }, 8000);
     });
-    
   }
+  
 
   ionViewWillEnter() {
   //  this.oneSignalService.close();
@@ -93,9 +99,19 @@ export class AppComponent {
 
   loadRequests() {
     this.requestService.requests(0).then((resp: any) => {
-      this.newRequestsCount = resp.data.length;
+        if (!resp || !resp.data) { // ✅ Check if `resp` and `resp.data` exist
+            console.warn("No request data received. Defaulting to 0.");
+            this.newRequestsCount = 0;
+            return;
+        }
+
+        this.newRequestsCount = resp.data.length;
+    }).catch(err => {
+        console.error("Error in loadRequests:", err);
+        this.newRequestsCount = 0; // ✅ Prevent app crash by setting a default value
     });
-  }
+}
+
   
   async presentModal(data: any[], title: string) {
     let modalData = data;
@@ -154,22 +170,36 @@ export class AppComponent {
 
   connectUser() {
     if (!this.socket || !this.socket.emit) {
-      console.log('Socket object or emit method is undefined');
-      return;
+        console.error('❌ Socket is not initialized.');
+        return;
     }
+
     this.socket.emit('connect-user', this.user.id);
-    this.socket.on('called', () => {
-      console.log('called');
-      this.playAudio("./../../../../../assets/audio/calling.mp3");
-      this.messengerService.onMessage().subscribe(msg => {
-        if (msg && msg.event && msg.event === 'stop-audio') this.audio.pause();
-      });
-      console.log('socket call');
+    this.socket.on('called', (data) => {
+        console.log("📞 Incoming call from:", data.callerId);
+
+        // ✅ Store partner ID for WebRTC connection
+        localStorage.setItem('partnerId', data.callerId);
+
+        this.playAudio('./../../../../../assets/audio/calling.mp3');
+
+        this.messengerService.onMessage().subscribe((msg) => {
+            if (msg?.event === 'stop-audio') {
+                this.audio.pause();
+            }
+        });
+
+        console.log("📡 WebRTC connection initialized.");
+        this.initWebrtc(); // ✅ Initialize WebRTC with stored partner ID
     });
+
     this.socket.on('video-canceled', () => {
-      if (this.audio) this.audio.pause();
+        console.log("🚫 Call canceled.");
+        if (this.audio) this.audio.pause();
+        localStorage.removeItem('partnerId'); // ✅ Clear stored partner ID
     });
-  }
+}
+
 
   getUserData() {
     if (this.platform.is('cordova')) {
@@ -206,10 +236,15 @@ export class AppComponent {
     this.filterAvatars();
     this.connectUser();
     this.initWebrtc();
-   // this.oneSignalService.open(this.user.id);
-    this.changeDetectorRef.detectChanges(); // Trigger Angular change detection
-
+    
+    // ✅ Initialize WebSocket when user data is loaded
+    SocketService.initializeSocket(this.user.id).catch(err => {
+      console.error("WebSocket initialization failed:", err);
+    });
+  
+    this.changeDetectorRef.detectChanges();
   }
+  
   
   private filterAvatars() {
     if (this.user.avatar) {
@@ -219,8 +254,28 @@ export class AppComponent {
   }
 
   async initWebrtc() {
-    await this.webrtcService.createPeer(this.user.id);
-  }
+    if (!this.user || !this.user.id) {
+        console.error("❌ User data is missing. Cannot initialize WebRTC.");
+        return;
+    }
+
+    // ✅ Retrieve stored partner ID if available
+    let partnerId = localStorage.getItem('partnerId');
+    if (!partnerId) {
+        console.warn("⚠️ No partner ID found. Waiting for incoming call...");
+        return;
+    }
+
+    console.log(`🔵 Initializing WebRTC for auth user: ${this.user.id}, Partner: ${partnerId}`);
+
+    try {
+        // ✅ Establish a WebRTC peer connection with the partner
+        await this.webrtcService.createPeer(this.user.id, partnerId);
+    } catch (error) {
+        console.error("❌ Error initializing WebRTC:", error);
+    }
+}
+
 
   getJsonData() {
     this.jsonService.getCountries()

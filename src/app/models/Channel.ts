@@ -44,7 +44,7 @@ export class Channel {
 
   static createFromData(data: Partial<Channel>): Channel {
     const channel = new Channel();
-    const baseUrl = constants.DOMAIN_URL || 'http://127.0.0.1:3300';
+    const baseUrl = constants.DOMAIN_URL || 'https://newbackedn22.onrender.com';
   
     channel._id = data.id ?? data['_id'] ?? '';
     channel._name = data.name || '';
@@ -113,7 +113,7 @@ export class Channel {
     }
   }
   set photo(photo: string) {
-    const baseUrl = constants.DOMAIN_URL || 'http://127.0.0.1:3300';
+    const baseUrl = constants.DOMAIN_URL || 'https://newbackedn22.onrender.com';
     this._photo = photo.startsWith('https')
       ? photo
       : `${baseUrl}${photo.startsWith('/') ? '' : '/'}${photo}`;
