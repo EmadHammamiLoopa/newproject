@@ -14,7 +14,7 @@
     </ion-button>
 
     <!-- Show start video call button for friends -->
-    <ion-button *ngIf="user?.isFriend" [routerLink]="['/messages/video', user?.id]" shape="round">
+    <ion-button *ngIf="user?.isFriend" (click)="videoCall()" shape="round">
       <i class="fas fa-video"></i>
     </ion-button>
   </ion-buttons>

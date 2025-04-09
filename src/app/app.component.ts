@@ -17,6 +17,7 @@ import { ListSearchComponent } from '../app/pages/list-search/list-search.compon
 import { ToastService } from './services/toast.service'; // Import ToastService
 import { RequestService } from './services/request.service';
 import { Socket } from 'socket.io-client';
+import { UserService } from './services/user.service';
 
 @Component({
   selector: 'app-root',
@@ -57,7 +58,9 @@ export class AppComponent {
     private changeDetectorRef: ChangeDetectorRef,
     private toastService: ToastService, // Inject ToastService
     private requestService: RequestService,
-    private socketService: SocketService // ✅ Inject SocketService
+    private socketService: SocketService, // ✅ Inject SocketService
+private userService: UserService,
+public webRTC: WebrtcService,
 
   ) {
 
@@ -255,26 +258,42 @@ export class AppComponent {
 
   async initWebrtc() {
     if (!this.user || !this.user.id) {
-        console.error("❌ User data is missing. Cannot initialize WebRTC.");
-        return;
+      console.error("❌ No user found, cannot init WebRTC.");
+      return;
     }
-
-    // ✅ Retrieve stored partner ID if available
-    let partnerId = localStorage.getItem('partnerId');
-    if (!partnerId) {
-        console.warn("⚠️ No partner ID found. Waiting for incoming call...");
-        return;
-    }
-
-    console.log(`🔵 Initializing WebRTC for auth user: ${this.user.id}, Partner: ${partnerId}`);
-
+  
     try {
-        // ✅ Establish a WebRTC peer connection with the partner
-        await this.webrtcService.createPeer(this.user.id, partnerId);
-    } catch (error) {
-        console.error("❌ Error initializing WebRTC:", error);
+      await this.webRTC.createPeer(this.user.id); // No partner ID needed yet
+      this.webRTC.wait(); // 👈 Add this to listen for incoming calls
+
+      const myPeerId = this.webRTC.getPeerId();
+      console.log(`✅ PeerJS ready. My Peer ID: ${myPeerId}`);
+  
+      const partnerId = localStorage.getItem('partnerId');
+      if (partnerId) {
+        this.userService.getPartnerPeerId(partnerId).subscribe({
+          next: (partnerPeerId) => {
+            if (!partnerPeerId || partnerPeerId === myPeerId) {
+              console.warn("⚠️ Partner ID invalid or same as mine");
+              return;
+            }
+            this.webRTC.callPartner(partnerPeerId);
+          },
+          error: (err) => {
+            console.error("❌ Error retrieving partner Peer ID:", err);
+          }
+        });
+      } else {
+        console.log("🟢 No partner ID yet. Ready to receive calls.");
+      }
+  
+    } catch (err) {
+      console.error("❌ WebRTC initialization error:", err);
     }
-}
+  }
+
+  
+  
 
 
   getJsonData() {

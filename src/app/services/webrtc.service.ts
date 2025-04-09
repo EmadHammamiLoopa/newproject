@@ -23,6 +23,7 @@ export class WebrtcService {
 
   userId: string;
 partnerId: string;
+myPeerId: string;
 
   stun = 'stun.l.google.com:19302';
   mediaConnection: MediaConnection;
@@ -57,23 +58,24 @@ partnerId: string;
     })
   }
 
-
   async init(myEl: HTMLMediaElement, partnerEl: HTMLMediaElement): Promise<boolean> {
     try {
-      // ✅ Ensure required permissions
+      if (!myEl || !partnerEl) {
+        console.error("❌ Cannot initialize WebRTC: one or both video elements are undefined.");
+        return false;
+      }
+  
+      // ✅ Store the elements before any stream assignment
+      this.myEl = myEl;
+      this.partnerEl = partnerEl;
+  
       const hasPermissions = await this.requestPermissions();
       if (!hasPermissions) {
         console.error("❌ Cannot proceed: Permissions not granted.");
         return false;
       }
   
-      // ✅ Assign video elements
-      this.myEl = myEl;
-      this.partnerEl = partnerEl;
-  
-      // ✅ Get media stream
       this.myStream = await this.getUserMedia();
-      
       if (!this.myStream) {
         console.error("❌ Failed to initialize media stream.");
         return false;
@@ -81,84 +83,57 @@ partnerId: string;
   
       console.log("✅ WebRTC initialized successfully.");
       return true;
+  
     } catch (error) {
       console.error("❌ Error initializing WebRTC:", error);
       return false;
     }
   }
   
+  getPeerId(): string {
+    return this.myPeerId;
+  }
   
 
-  async createPeer(authUserId: string, partnerId: string): Promise<{ myPeerId: string; partnerPeerId: string | null }> {
+  async createPeer(authUserId: string, partnerId?: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
-        this.userId = authUserId;
-        this.partnerId = partnerId;
-
-        console.log(`🔵 Creating PeerJS connection for auth user: ${authUserId}`);
-        console.log(`🔵 Looking for Partner ID: ${this.partnerId}`);
-
-        if (!this.partnerId || this.userId === this.partnerId) {
-            console.error("❌ Partner ID is missing or identical to the caller. Cannot proceed.");
-            return reject("Partner ID is missing or invalid.");
+      this.userId = authUserId;
+      this.partnerId = partnerId;
+  
+      console.log(`🔵 Creating PeerJS connection for user: ${authUserId}`);
+  
+      const myPeerId = `${authUserId}-${Math.random().toString(36).substr(2, 5)}`;
+      this.myPeerId = myPeerId;
+  
+      WebrtcService.peer = new Peer(myPeerId, {
+        host: 'peerjs-whei.onrender.com',
+        secure: true,
+        port: 443,
+        path: '/peerjs',
+        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] },
+      });
+  
+      WebrtcService.peer.on('open', async (id) => {
+        console.log(`✅ PeerJS connected with ID: ${id}`);
+        localStorage.setItem('myPeerId', id);
+  
+        try {
+          await this.userService.sendPeerIdToBackend(authUserId, id);
+          console.log(`📤 Sent Peer ID to backend`);
+          resolve();
+        } catch (err) {
+          console.error("❌ Failed to send Peer ID to backend:", err);
+          reject(err);
         }
-
-        // ✅ Generate Peer ID for the auth user
-        const myPeerId = `${authUserId}-${Math.random().toString(36).substr(2, 5)}`;
-
-        // ✅ Initialize PeerJS for the auth user
-        WebrtcService.peer = new Peer(myPeerId, {
-            host: 'peerjs-whei.onrender.com',
-            secure: true,
-            port: 443,
-            path: '/peerjs',
-            config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] },
-        });
-
-        WebrtcService.peer.on('open', async (id) => {
-            console.log(`✅ PeerJS connection established with ID: ${id}`);
-            localStorage.setItem('myPeerId', id);
-
-            try {
-                // ✅ Send auth user's Peer ID to backend
-                await this.userService.sendPeerIdToBackend(authUserId, id);
-                console.log(`📤 Auth User's Peer ID sent to backend: ${authUserId}`);
-
-                // ✅ Fetch the partner's Peer ID correctly
-                const peerData = await this.userService.getPeerId(this.partnerId).toPromise();
-                console.log("🔄 Retrieved Partner's Peer ID:", peerData);
-
-                let partnerPeerId = peerData?.peerId || null;
-
-                if (!partnerPeerId || partnerPeerId === myPeerId) {
-                    console.error("❌ Partner Peer ID is invalid or matches my Peer ID.");
-                    return reject("Invalid Partner Peer ID.");
-                }
-
-                console.log(`✅ My Peer ID: ${myPeerId}, Partner's Peer ID: ${partnerPeerId}`);
-                resolve({ myPeerId, partnerPeerId });
-            } catch (error) {
-                console.error("❌ Error fetching Partner Peer ID:", error);
-                reject(error);
-            }
-        });
-
-        WebrtcService.peer.on('error', (err) => {
-            console.error('❌ PeerJS Error:', err);
-            reject(err);
-        });
-
-        WebrtcService.peer.on('disconnected', () => {
-            console.warn('⚠️ PeerJS disconnected, attempting to reconnect...');
-            WebrtcService.peer.reconnect();
-        });
-
-        WebrtcService.peer.on('close', () => {
-            console.warn('⚠️ PeerJS connection closed.');
-            reject(new Error('PeerJS connection closed.'));
-        });
+      });
+  
+      WebrtcService.peer.on('error', (err) => {
+        console.error('❌ PeerJS Error:', err);
+        reject(err);
+      });
     });
-}
-
+  }
+  
 
 
 
@@ -299,20 +274,39 @@ storeMissedCall(userId: string) {
 wait() {
   console.log("📡 Waiting for incoming calls...");
 
-  WebrtcService.peer.on("call", (call) => {
-    console.log("📞 Incoming call from:", call.peer);
+  WebrtcService.peer.on("call", async (call) => {
+    console.log("📞 Incoming call detected from:", call.peer);
 
-    // ✅ Check if the peer is still online before answering
-    this.checkPeerOnline(call.peer).then((isOnline) => {
-      if (isOnline) {
-        this.answer(call);
-      } else {
-        console.warn(`⚠️ Peer ${call.peer} is not online anymore.`);
-        this.storeMissedCall(call.peer);
+    // 👉 Ensure media stream is ready before answering
+    if (!this.myStream) {
+      console.log("🎥 Media stream not ready. Attempting to getUserMedia...");
+      this.myStream = await this.getUserMedia();
+
+      if (!this.myStream) {
+        console.error("❌ Cannot answer: No media stream available.");
+        return;
       }
+
+      this.myEl.srcObject = this.myStream;
+    }
+
+    call.answer(this.myStream); // ✅ Answer with stream
+    WebrtcService.call = call;
+
+    call.on("stream", (remoteStream) => {
+      console.log("✅ Remote stream received.");
+      if (this.partnerEl) {
+        this.partnerEl.srcObject = remoteStream;
+      }
+    });
+
+    call.on("error", (err) => {
+      console.error("❌ Call error:", err);
     });
   });
 }
+
+
 
 // ✅ Function to check if the peer is online
 async checkPeerOnline(peerId: string): Promise<boolean> {
@@ -334,10 +328,19 @@ async checkPeerOnline(peerId: string): Promise<boolean> {
 
 
 
-  handleSuccess(stream: MediaStream) {
-    this.myStream = stream;
-    this.myEl.srcObject = stream;
+handleSuccess(stream: MediaStream) {
+  this.myStream = stream;
+
+  if (!this.myEl) {
+    console.warn("⚠️ myEl is undefined during handleSuccess(). Will not assign stream to video element yet.");
+    return;
   }
+
+  this.myEl.srcObject = stream;
+  console.log("✅ Local stream assigned to myEl");
+}
+
+
 
   handleError(error: any) {
     if (error.name === 'ConstraintNotSatisfiedError') {
@@ -352,7 +355,10 @@ async checkPeerOnline(peerId: string): Promise<boolean> {
 
   errorMsg(msg: string, error?: any) {
     const errorElement = document.querySelector('#errorMsg');
-    errorElement.innerHTML += `<p>${msg}</p>`;
+    if (errorElement) {
+      errorElement.innerHTML += `<p>${msg}</p>`;
+    }
+    
     if (typeof error !== 'undefined') {
       console.error(error);
     }

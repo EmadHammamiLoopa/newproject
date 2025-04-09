@@ -21,7 +21,7 @@ export class UserService {
   public viewedUser: Observable<User>;
 
   constructor(private http: HttpClient, private storageService: StorageService) {
-    this.currentUserSubject = new BehaviorSubject<User>(JSON.parse(localStorage.getItem('currentUser')));
+    this.currentUserSubject = new BehaviorSubject<User>(JSON.parse(localStorage.getItem('user')));
     this.currentUser = this.currentUserSubject.asObservable();
 
     this.viewedUserSubject = new BehaviorSubject<User>(null);
@@ -37,7 +37,7 @@ export class UserService {
   }
 
   setCurrentUser(user: User) {
-    localStorage.setItem('currentUser', JSON.stringify(user));
+    localStorage.setItem('user', JSON.stringify(user));
     this.currentUserSubject.next(user);
   }
 
@@ -127,16 +127,20 @@ getCurrentUserId(): string | null {
     return this.http.get(`${this.apiUrl}/user/friends`).toPromise();
   }
 
-  getPeerId(userId: string) {
-    const url = `${this.apiUrl}/${userId}/peer`;
-    console.log('🔗 Fetching peerId from URL:', url); // Log the URL
-    return this.http.get<{ 
-      success: boolean; 
-      message: string; 
-      userId: string; 
-      peerId?: string 
-    }>(url);
+  getPartnerPeerId(userId: string): Observable<string | null> {
+    return this.http.get<{ success: boolean; peerId?: string; message: string }>(
+      `${this.apiUrl}/${userId}/peer`
+    ).pipe(
+      map(response => {
+        return response.success && response.peerId ? response.peerId : null;
+      }),
+      catchError(error => {
+        console.error('❌ Peer lookup error:', error);
+        return throwError(() => new Error('Error fetching partner peer ID'));
+      })
+    );
   }
+  
   
   sendPeerIdToBackend(userId: string, peerId: string): Promise<void> {
     return new Promise((resolve, reject) => {

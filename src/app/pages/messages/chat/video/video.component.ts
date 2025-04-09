@@ -10,6 +10,7 @@ import { SocketService } from 'src/app/services/socket.service';
 import { MessengerService } from './../../../messenger.service';
 import { AdMobFeeService } from './../../../../services/admobfree.service';
 import { Socket } from 'socket.io-client';
+import { JwtHelperService } from '@auth0/angular-jwt';
 
 @Component({
   selector: 'app-video',
@@ -36,6 +37,7 @@ export class VideoComponent implements OnInit {
   audioEnabled = true;
   cameraEnabled = true;
   localStream: MediaStream | null = null;
+  jwtHelper = new JwtHelperService();
 
   constructor(
     public webRTC: WebrtcService,
@@ -49,6 +51,7 @@ export class VideoComponent implements OnInit {
     private messengerService: MessengerService,
     private adMobFeeService: AdMobFeeService,
     private socketService: SocketService
+    
   ) {}
 
   ngOnInit() {
@@ -69,7 +72,8 @@ export class VideoComponent implements OnInit {
 async ionViewWillEnter() {
   try {
       this.pageLoading = true;
-      this.getUserId();
+      await this.getUserId(); // Ensure this is awaited
+      await this.getUser(); // Ensure this is awaited
 
       console.log("📹 Initializing WebRTC...");
       this.myEl = document.querySelector('#my-video');
@@ -80,15 +84,11 @@ async ionViewWillEnter() {
           return;
       }
 
-      // ✅ Wait for user and partner IDs
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
       console.log(`✅ partnerEl: ${this.partnerEl}, Partner's Peer ID: ${this.partner.id}`);
 
       await this.webRTC.init(this.myEl, this.partnerEl);
       console.log("✅ WebRTC initialized successfully.");
 
-      // ✅ If the user is the receiver, listen for calls
       if (this.answer) {
           console.log("📲 Receiver detected. Waiting for calls...");
           this.webRTC.wait();
@@ -106,11 +106,10 @@ async ionViewWillEnter() {
 
 
 
-
 getUserId() {
   this.route.paramMap.subscribe((params) => {
       this.userId = params.get('id');
-      console.log("🟢 Retrieved User ID:", this.userId);
+      console.log("🟢 Retrieved Parternrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr User ID:", this.userId);
       
       this.route.queryParamMap.subscribe((query) => {
           this.answer = query.get('answer') ? true : false;
@@ -122,83 +121,104 @@ getUserId() {
 }
 
 
-  getUser() {
-    console.log('Fetching user profile for ID:', this.userId);
-    this.userService.getUserProfile(this.userId).subscribe(
-      async (resp: any) => {
-        this.pageLoading = false;
-        console.log('User profile response:', resp);
-  
-        const userData = resp.data || resp;
-  
-        if (userData) {
-          try {
-            console.log('Raw userData:', userData);
-            this.partner = userData instanceof User ? userData : new User().initialize(userData);
-            console.log('Partner initialized successfully:', this.partner);
-  
-            // ✅ Fetch the peerId after getting user profile
-          } catch (error) {
-            console.error('Error initializing partner user:', error);
-            this.handleUserInitError();
-          }
-        } else {
-          console.error('Invalid response data: userData is null or undefined');
+getUser() {
+  console.log('Fetching partner profile for ID:', this.userId);
+  this.userService.getUserProfile(this.userId).subscribe(
+    async (resp: any) => {
+      this.pageLoading = false;
+      console.log('Partner profile response:', resp);
+
+      const userData = resp.data || resp;
+
+      if (userData) {
+        try {
+          console.log('Raw userData:', userData);
+          this.partner = userData instanceof User ? userData : new User().initialize(userData);
+          console.log('Partner initialized successfully:', this.partner);
+        } catch (error) {
+          console.error('Error initializing partner user:', error);
           this.handleUserInitError();
         }
-      },
-      (err) => {
-        console.error('Error fetching user profile:', err);
-        this.pageLoading = false;
-        this.location.back();
-        this.toastService.presentStdToastr('Cannot make this call, try again later');
+      } else {
+        console.error('Invalid response data: userData is null or undefined');
+        this.handleUserInitError();
       }
-    );
-  }
-  
-
-
-  getAuthUser() {
-    this.nativeStorage.getItem('user').then(
-        (user) => {
-            console.log("🟢 Retrieved Auth User from Storage:", user);
-            if (user) {
-                this.user = new User().initialize(user);
-                console.log("✅ Auth User Initialized:", this.user);
-            } else {
-                console.warn("⚠️ No user found in storage, fetching from localStorage...");
-                this.fetchUserFromLocalStorage();
-            }
-        },
-        (err) => {
-            console.error("❌ Error retrieving user from NativeStorage:", err);
-            this.fetchUserFromLocalStorage();
-        }
-    );
+    },
+    (err) => {
+      console.error('Error fetching partner profile:', err);
+      this.pageLoading = false;
+      this.location.back();
+      this.toastService.presentStdToastr('Cannot make this call, try again later');
+    }
+  );
 }
 
 
-  fetchUserFromLocalStorage() {
-    try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (user) {
-        if (typeof user === 'object' && !(user instanceof User)) {
-          this.user = new User().initialize(user);
-        } else {
-          console.error('Invalid user data from localStorage:', user);
-          this.handleUserInitError();
-          return;
-        }
-        console.log('Auth user initialized from localStorage:', this.user);
-        this.initializeSocket(this.user.id);
-      } else {
-        this.handleUserInitError();
+getAuthUser() {
+  console.log('🔍 Starting authentication process...');
+  
+  const getToken = async (): Promise<string | null> => {
+    console.log('🔑 Attempting to retrieve token...');
+    if (this.isCordovaAvailable()) {
+      console.log('📱 Cordova platform detected - using NativeStorage');
+      try {
+        const token = await this.nativeStorage.getItem('token');
+        console.log('✅ Token retrieved from NativeStorage');
+        return token;
+      } catch (err) {
+        console.warn("⚠️ Failed to retrieve token from NativeStorage:", err);
+        return null;
       }
-    } catch (err) {
-      console.error('Error initializing auth user from localStorage:', err);
-      this.handleUserInitError();
+    } else {
+      console.log('🖥️ Web platform detected - using localStorage');
+      const token = localStorage.getItem('token');
+      console.log(token ? '✅ Token retrieved from localStorage' : '❌ No token in localStorage');
+      return token;
     }
-  }
+  };
+
+  getToken().then((token) => {
+    if (!token) {
+      console.error("❌ No token found in storage");
+      this.router.navigate(['/auth/signin']);
+      return;
+    }
+
+    console.log('🔍 Token found, decoding...');
+    try {
+      const decoded = this.jwtHelper.decodeToken(token);
+      console.log('🔍 Decoded token content:', {
+        idPresent: !!decoded?._id,
+        firstNamePresent: !!decoded?.firstName,
+        lastNamePresent: !!decoded?.lastName,
+        avatarPresent: !!decoded?.mainAvatar
+      });
+
+      if (!decoded?._id) {
+        console.error("❌ Invalid token structure - missing _id");
+        this.router.navigate(['/auth/signin']);
+        return;
+      }
+
+      // ONLY use the decoded token data
+      this.authUser = new User().initialize({
+        _id: decoded._id,
+        firstName: decoded.firstName || '',
+        lastName: decoded.lastName || '',
+        mainAvatar: decoded.mainAvatar || ''
+      });
+      
+      console.log("🔐 Successfully initialized authenticated user:", {
+        id: this.authUser._id,
+        name: `${this.authUser.firstName} ${this.authUser.lastName}`,
+        hasAvatar: !!this.authUser.mainAvatar
+      });
+    } catch (error) {
+      console.error("❌ Token decoding failed with error:", error);
+      this.router.navigate(['/auth/signin']);
+    }
+  });
+}
 
   handleUserInitError() {
     this.pageLoading = false;
@@ -371,42 +391,47 @@ async emitWebSocketEvent(eventName: string, data: any) {
   
 }
 
-
 async call() {
   console.log("📞 Initiating video call...");
 
+  const callerId = this.authUser._id;
+  const receiverId = this.userId;
+
+  if (!callerId || !receiverId) {
+    console.error("❌ Missing IDs - Caller:", callerId, "Receiver:", receiverId);
+    return;
+  }
+
   try {
-      // ✅ Ensure IDs are set correctly before starting the call
-      console.log("🟢 Auth User:", this.user);
-      console.log("🟢 Partner User:", this.partner);
+    const myPeerId = this.webRTC.getPeerId();
+    if (!myPeerId) {
+      console.error("❌ My Peer ID is not initialized.");
+      return;
+    }
 
-      if (!this.user || !this.partner || !this.user.id || !this.partner.id) {
-          console.error("❌ User or Partner ID is missing. Cannot start call.");
-          return;
-      }
+    // ✅ Step 1: Get partner's peerId from backend
+    const partnerPeerId = await this.userService.getPartnerPeerId(receiverId).toPromise();
 
-      // ✅ Set Caller and Receiver IDs properly
-      const callerId = this.user.id;
-      const receiverId = this.partner.id;
+    if (!partnerPeerId || partnerPeerId === myPeerId) {
+      console.warn("⚠️ Partner Peer ID is invalid or same as mine.");
+      return;
+    }
 
-      console.log(`🟢 Caller ID: ${callerId}, 🔴 Receiver ID: ${receiverId}`);
-
-      // ✅ Ensure Peer Connection is Established
-      const { myPeerId, partnerPeerId } = await this.webRTC.createPeer(callerId, receiverId);
-      console.log(`✅ My Peer ID: ${myPeerId}, Partner's Peer ID: ${partnerPeerId}`);
-
-      if (!partnerPeerId) {
-          console.error("❌ Cannot start call: Partner's Peer ID is missing.");
-          return;
-      }
-
-      console.log(`📞 Calling partner with Peer ID: ${partnerPeerId}`);
-      await this.webRTC.callPartner(partnerPeerId);
+    // ✅ Step 2: Initiate call
+    console.log(`📞 Calling partner with Peer ID: ${partnerPeerId}`);
+    await this.webRTC.callPartner(partnerPeerId);
+    this.calling = true;
+    await this.emitWebSocketEvent('video-call-started', {
+      from: this.authUser._id,
+      to: this.userId
+    });
+    
   } catch (error) {
-      console.error("❌ Error during call initiation:", error);
+    console.error("❌ Call failed:", error);
+    this.toastService.presentStdToastr('Call initialization failed');
+    this.closeCall();
   }
 }
-
 
 
 
@@ -442,8 +467,8 @@ async call() {
         calls = calls.filter((call) => new Date().getTime() - call.date < 24 * 60 * 60 * 1000);
         
         calls.push({
-            id: this.user.id,
-            date: new Date().getTime(),
+          id: this.authUser._id, // Changed from this.user.id
+          date: new Date().getTime(),
         });
 
         this.nativeStorage.setItem('videoCalls', calls);
@@ -482,7 +507,7 @@ async call() {
 
     setTimeout(() => {
         console.log("🔄 Redirecting user to previous page...");
-        this.router.navigate(['/home']);
+        this.router.navigate(['/auth/home']);
     }, 1000);
 }
 
@@ -512,7 +537,7 @@ async call() {
     // ✅ Ensure WebSocket is disconnected
     if (this.socket) {
         console.log("✅ Disconnecting from WebSocket...");
-        this.emitWebSocketEvent('video-call-ended', { from: this.user.id, to: this.userId });
+        this.emitWebSocketEvent('video-call-ended', { from: this.authUser._id, to: this.userId });
         this.socket.disconnect();
         this.socket = null;
     }
@@ -534,10 +559,17 @@ answerCall() {
   this.messengerService.sendMessage({ event: 'stop-audio' });
 
   if (WebrtcService.call) {
-      this.webRTC.answer(WebrtcService.call); // ✅ Pass the active call
+    this.webRTC.answer(WebrtcService.call);
   } else {
-      console.warn("⚠️ No active call found. Waiting for call...");
-  }
+    console.warn("⚠️ No active call found. Will retry shortly...");
+    setTimeout(() => {
+      if (WebrtcService.call) {
+        this.webRTC.answer(WebrtcService.call);
+      } else {
+        console.error("❌ Still no call available to answer.");
+      }
+    }, 1000);
+  }  
 
   this.countVideoCalls(); // ✅ Track answered calls
   this.waitForAnswer();
