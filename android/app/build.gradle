@@ -4,6 +4,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'    // ✅ Kotlin plugin
 }
 
+
 android {
     namespace "com.Loopa.app"
     compileSdk 34  // ✅ Latest SDK version

@@ -210,9 +210,7 @@ export class User {
   get loggedIn(): boolean { return this._loggedIn; }
   get visitProfile(): boolean { return this._visitProfile; }
 
-  get peerId(): string | null {
-    return this._peerId;
-  }
+
   public getPeerId(): string | null {
     return this._peerId;
 }
@@ -222,7 +220,14 @@ public setPeerId(peerId: string | null): void {
     console.log(`🔄 Setting Peer ID: ${peerId}`);
     this._peerId = peerId;
 }
+get peerId(): string | null {
+  return this._peerId;
+}
 
+// ✅ Setter for Peer ID
+set peerId(peerId: string | null) {
+  this._peerId = peerId;
+}
   // Setter methods
   set id(id: string) { this._id = id; }
   set firstName(firstName: string) { this._firstName = firstName; }
@@ -310,20 +315,20 @@ public setPeerId(peerId: string | null): void {
   }
 
   public getAge(isLoggedInUser: boolean): number | null {
-   // console.log('loggedIn:', isLoggedInUser);
-   // console.log('ageVisible:', this._ageVisible);
+  //  console.log('loggedIn:', isLoggedInUser);
+  //  console.log('ageVisible:', this._ageVisible);
    // console.log('birthDate:', this._birthDate);
 
     // If it's the logged-in user's profile, always return the age, otherwise check ageVisible
     if ((!this._ageVisible && !isLoggedInUser) || !this._birthDate) {
-      //  console.log('Returning null - either age is not visible or birth date is missing.');
+     ///   console.log('Returning null - either age is not visible or birth date is missing.');
         return null;
     }
 
     const today = new Date();
     const birthDate = new Date(this._birthDate);
-    //console.log('Today\'s Date:', today);
-    //console.log('Birth Date:', birthDate);
+ //   console.log('Today\'s Date:', today);
+  //  console.log('Birth Date:', birthDate);
 
     let age = today.getFullYear() - birthDate.getFullYear();
 
@@ -332,7 +337,7 @@ public setPeerId(peerId: string | null): void {
         age--; // Adjust age if the birthday hasn't occurred yet this year
     }
 
-    //console.log('Final Age:', age);
+   // console.log('Final Age:', age);
     return age;
 }
 
@@ -354,10 +359,6 @@ public setPeerId(peerId: string | null): void {
   initialize(user: any): User {
    // console.log('Initializing user:', user);
 
-    if (!user || typeof user !== 'object') {
-      console.error('Invalid user data:', user);
-      throw new Error('Invalid user data');
-    }
 
     this._id = user._id || '';
     this._firstName = user.firstName || '';
@@ -420,7 +421,7 @@ public setPeerId(peerId: string | null): void {
       this.sortInterests();
     }
 
-  //  console.log('User initialized successfully:', this.toObject());
+    //('User initialized successfully:', this.toObject());
 
     return this;
   }
@@ -431,7 +432,7 @@ public setPeerId(peerId: string | null): void {
   
     return avatars.filter(avatar => {
       const normalizedAvatar = this.normalizeAvatarPath(avatar);
-    //  console.log(`Comparing normalizedAvatar: ${normalizedAvatar} with normalizedDefaultAvatar: ${normalizedDefaultAvatar}`);
+      console.log(`Comparing normalizedAvatar: ${normalizedAvatar} with normalizedDefaultAvatar: ${normalizedDefaultAvatar}`);
       return normalizedAvatar !== normalizedDefaultAvatar;
     });
   }
@@ -439,7 +440,7 @@ public setPeerId(peerId: string | null): void {
   
   
   private normalizeAvatarPath(avatarPath: string): string {
-   // console.log("avatarpath in normalizeAvatarPath:", avatarPath);
+    console.log("avatarpath in normalizeAvatarPath:", avatarPath);
   
     // Normalize the path by removing the domain and any '/public' prefix
     try {

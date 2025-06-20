@@ -117,7 +117,7 @@ export class NewFriendsPage implements OnInit {
               this.users.push({ isDivider: true });
             } else {
               const initializedUser = new User().initialize(user);
-             // console.log('Initialized User:', initializedUser);
+              console.log('Initialized User:', initializedUser);
               this.users.push(initializedUser);
             }
           });

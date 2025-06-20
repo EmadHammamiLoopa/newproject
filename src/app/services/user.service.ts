@@ -16,18 +16,44 @@ export class UserService {
   private apiUrl = `${environment.apiUrl}/user`;
   private currentUserSubject: BehaviorSubject<User>;
   public currentUser: Observable<User>;
-  private nativeStorage: NativeStorage;
   private viewedUserSubject: BehaviorSubject<User>;
   public viewedUser: Observable<User>;
 
-  constructor(private http: HttpClient, private storageService: StorageService) {
-    this.currentUserSubject = new BehaviorSubject<User>(JSON.parse(localStorage.getItem('user')));
+  constructor(
+    private http: HttpClient,
+    private storageService: StorageService,
+    private nativeStorage: NativeStorage // ✅ Add clearly
+  ) {
+    this.currentUserSubject = new BehaviorSubject<User>(null);
     this.currentUser = this.currentUserSubject.asObservable();
-
+  
     this.viewedUserSubject = new BehaviorSubject<User>(null);
     this.viewedUser = this.viewedUserSubject.asObservable();
+  
+    this.initCurrentUser(); // ✅ initialize clearly
   }
+  
 
+  private async initCurrentUser() {
+    try {
+      let user: User = await this.nativeStorage.getItem('user');
+  
+      if (!user) {
+        const localStorageUser = localStorage.getItem('user');
+        user = localStorageUser ? JSON.parse(localStorageUser) : null;
+      }
+  
+      if (user) {
+        this.currentUserSubject.next(new User().initialize(user));
+        console.log('✅ Current user initialized:', user);
+      } else {
+        console.warn('⚠️ No user found in any storage');
+      }
+  
+    } catch (error) {
+      console.error('❌ Initialization error:', error);
+    }
+  }
   public get currentUserValue(): User {
     return this.currentUserSubject.value;
   }
@@ -141,8 +167,20 @@ getCurrentUserId(): string | null {
     );
   }
   
+  heartbeatPeer(userId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.http.patch(`${this.apiUrl}/${userId}/peer/heartbeat`, {}, {
+        headers: { 'Content-Type': 'application/json' }
+      }).subscribe(
+        ()  => resolve(),
+        err => reject(err)
+      );
+    });
+  }
   
   sendPeerIdToBackend(userId: string, peerId: string): Promise<void> {
+    console.log("peerIdpeerIdpeerIdpeerId to backend:", peerId);
+
     return new Promise((resolve, reject) => {
         this.http.post(`${this.apiUrl}/${userId}/peer`, { peerId }, {
             headers: { 'Content-Type': 'application/json' }

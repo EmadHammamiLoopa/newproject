@@ -4,20 +4,23 @@ import { UserService } from './../../../../services/user.service';
 import { User } from './../../../../models/User';
 import { WebrtcService } from './../../../../services/webrtc.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, ElementRef, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NativeStorage } from '@ionic-native/native-storage/ngx';
 import { SocketService } from 'src/app/services/socket.service';
 import { MessengerService } from './../../../messenger.service';
 import { AdMobFeeService } from './../../../../services/admobfree.service';
 import { Socket } from 'socket.io-client';
 import { JwtHelperService } from '@auth0/angular-jwt';
+import { Subscription } from 'rxjs';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Platform } from '@ionic/angular';
 
 @Component({
   selector: 'app-video',
   templateUrl: './video.component.html',
   styleUrls: ['./video.component.scss'],
 })
-export class VideoComponent implements OnInit {
+export class VideoComponent implements OnInit, OnDestroy {
   calling = false;
   isAudioPlaying = false; // Add this flag
 
@@ -38,7 +41,23 @@ export class VideoComponent implements OnInit {
   cameraEnabled = true;
   localStream: MediaStream | null = null;
   jwtHelper = new JwtHelperService();
+  callDuration = 0; // Initialize at 0 seconds
+  private callTimer: any; // For storing the timer reference
 
+  answeringCall = false;
+startingCall = false;
+endingCall = false;
+switchingCamera = false;
+
+// Add to your component
+@ViewChild('myVideo', { static: false }) myVideoRef: ElementRef;
+@ViewChild('partnerVideo', { static: false }) partnerVideoRef: ElementRef;
+  private callStateSubscription: Subscription;
+  private connectionSubscriptions: Subscription[] = [];
+
+  private partnerAnsweredListener: () => void;
+  private backButtonSubscription: Subscription;
+  
   constructor(
     public webRTC: WebrtcService,
     public elRef: ElementRef,
@@ -50,62 +69,257 @@ export class VideoComponent implements OnInit {
     private router: Router,
     private messengerService: MessengerService,
     private adMobFeeService: AdMobFeeService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private cdr: ChangeDetectorRef,
+    private platform: Platform
     
-  ) {}
-
-  ngOnInit() {
-    console.log('📞 Initializing Video Call Component...');
-    this.getAuthUser();
-
-    this.route.queryParamMap.subscribe((query) => {
-        this.answer = query.get('answer') ? true : false;
-
-        if (!this.answer) { // ✅ If the user is the caller, start call automatically
-            console.log("📞 Caller detected. Starting the call...");
-            setTimeout(() => this.call(), 1000); // Wait a bit to ensure WebRTC is ready
-        }
-    });
+  ) {    this.partnerAnsweredListener = () => {
+    console.log("🎉 Partner has answered the call (class handler)");
+    this.answered = true;
+    this.cdr.detectChanges();
+  };
 }
 
 
+
+  ngOnInit() {
+    console.log('📞 Initializing Video Call Component...');
+    
+    // Subscribe to call state changes
+    this.callStateSubscription = this.webRTC.callState$.subscribe(state => {
+      if (state?.connected) {
+        console.log("🎉 Call connected - updating UI");
+        this.answered = true;
+        this.calling = false;
+        this.startCallTimer();
+        this.cdr.detectChanges();
+      } else if (state === null) {
+        this.stopCallTimer();
+      }
+    });
+
+    // Set up back button handler
+    this.backButtonSubscription = this.platform.backButton.subscribeWithPriority(10, () => {
+      this.handleBackButton();
+    });
+
+    // First get the auth user
+    this.getAuthUser().then(() => {
+      // Then get the route parameters
+      this.route.paramMap.subscribe(params => {
+        this.userId = params.get('id');
+        console.log("🟢 Retrieved Partner User ID:", this.userId);
+  
+        if (!this.userId) {
+          console.error("❌ No partner ID provided in route");
+          this.router.navigate(['/']); // Redirect if no ID
+          return;
+        }
+  
+        // Get user profile
+        this.getUser();
+  
+
+      window.removeEventListener("partner-answered", this.partnerAnsweredListener); // ✅ Fixed
+
+  
+        // Clean up listener when component is destroyed
+        this.connectionSubscriptions.push(new Subscription(() => {
+          window.addEventListener("partner-answered", this.partnerAnsweredListener);
+        }));
+  
+        window.addEventListener('peer-call-error', () => {
+          this.toastService.presentStdToastr('Call could not be established');
+          this.cancel(true);               // silent local cleanup
+        });
+        
+        // Get query params
+        this.route.queryParamMap.subscribe(query => {
+          this.answer = query.get('answer') === 'true';
+          console.log("🟢 Answer Mode:", this.answer);
+          
+          // For callers only - wait for video elements will be handled in ionViewWillEnter
+          if (!this.answer) {
+            console.log("🔄 Caller mode - call will be initiated after view enters");
+          }
+        });
+      });
+    });
+  }
+  private handleBackButton() {
+    console.log('🔙 Handling back button');
+    this.cleanupResources();
+    this.location.back();
+  }
+
+// Remove ionViewDidLeave and keep ionViewWillLeave
+ionViewWillLeave() {
+  console.log('🏁 VideoComponent will leave');
+  this.cleanupResources();
+}
+
+  ngOnDestroy() {
+    console.log('🧹 VideoComponent destroyed');
+    this.cleanupResources();
+    
+    // Clean up subscriptions
+    if (this.callStateSubscription) {
+      this.callStateSubscription.unsubscribe();
+    }
+    
+    if (this.backButtonSubscription) {
+      this.backButtonSubscription.unsubscribe();
+    }
+    
+    this.connectionSubscriptions.forEach(sub => sub.unsubscribe());
+    this.connectionSubscriptions = [];
+  }
+
+  private cleanupResources() {
+    console.log('🧹 Cleaning up resources');
+    
+    // 1. Remove event listeners
+    window.removeEventListener("partner-answered", this.partnerAnsweredListener);
+    
+    // 2. Clean up audio
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.src = '';
+      this.audio = null;
+    }
+    
+    // 3. Clean up WebRTC
+    this.webRTC.close();
+    
+    // 4. Clean up video elements
+    if (this.myEl) {
+      this.myEl.srcObject = null;
+      this.myEl.pause();
+    }
+    if (this.partnerEl) {
+      this.partnerEl.srcObject = null;
+      this.partnerEl.pause();
+    }
+    
+    // 5. Clean up socket
+    if (this.socket) {
+      this.socket.emit('disconnect-user');
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  }
+
+
+// Add these methods to your component
+private startCallTimer() {
+  this.callDuration = 0; // Reset when call starts
+  this.callTimer = setInterval(() => {
+    this.callDuration++;
+    this.cdr.detectChanges(); // Update the view
+  }, 1000); // Increment every second
+}
+
+private stopCallTimer() {
+  if (this.callTimer) {
+    clearInterval(this.callTimer);
+    this.callTimer = null;
+  }
+}
 async ionViewWillEnter() {
   try {
-      this.pageLoading = true;
-      await this.getUserId(); // Ensure this is awaited
-      await this.getUser(); // Ensure this is awaited
+    this.pageLoading = true; this.cdr.detectChanges();
 
-      console.log("📹 Initializing WebRTC...");
-      this.myEl = document.querySelector('#my-video');
-      this.partnerEl = document.querySelector('#partner-video');
+    await this.webRTC.createPeer(this.authUser._id); // only once
 
-      if (!this.myEl || !this.partnerEl) {
-          console.error("❌ Video elements not found.");
-          return;
-      }
+    await this.waitForVideoElements();
+    if (!await this.checkMediaPermissions()) throw new Error('perm');
 
-      console.log(`✅ partnerEl: ${this.partnerEl}, Partner's Peer ID: ${this.partner.id}`);
+    await this.webRTC.init(this.myEl, this.partnerEl);
 
-      await this.webRTC.init(this.myEl, this.partnerEl);
-      console.log("✅ WebRTC initialized successfully.");
-
-      if (this.answer) {
-          console.log("📲 Receiver detected. Waiting for calls...");
-          this.webRTC.wait();
-      } else {
-          console.log("📞 Caller detected. Starting call...");
-          this.call();
-      }
-  } catch (error) {
-      console.error("❌ Error initializing WebRTC:", error);
+    if (!this.answer) {
+      console.log('🔄 caller mode');
+      await this.initializeCallWithRetry();
+    }
+  } catch (e) {
+    console.error(e);
+    this.toastService.presentStdToastr('Failed to start video call.');
+    this.router.navigate(['/']);
   } finally {
-      this.pageLoading = false;
+    this.pageLoading = false; this.cdr.detectChanges();
   }
 }
 
 
 
+private async initializeCallWithRetry(retries = 3): Promise<boolean> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      this.startingCall = true;
+      await this.call();
+      return true;
+    } catch (error) {
+      console.warn(`Call attempt ${i + 1} failed:`, error);
+      if (i < retries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+      }
+    } finally {
+      this.startingCall = false;
+    }
+  }
+  throw new Error(`Failed to initialize call after ${retries} attempts`);
+}
 
+private async checkMediaPermissions(): Promise<boolean> {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    stream.getTracks().forEach(track => track.stop());
+    return true;
+  } catch (err) {
+    console.error("Permission denied:", err);
+    this.toastService.presentStdToastr("Please enable camera and microphone permissions");
+    return false;
+  }
+}
+
+private async waitForVideoElements(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const maxAttempts = 30; // Increased further
+    let attempts = 0;
+    
+    const checkElements = () => {
+      attempts++;
+      
+      // Use both ViewChild and direct DOM query with fallbacks
+      this.myEl = this.myVideoRef?.nativeElement || 
+                 document.querySelector('#my-video') as HTMLVideoElement;
+      this.partnerEl = this.partnerVideoRef?.nativeElement || 
+                      document.querySelector('#partner-video') as HTMLVideoElement;
+      
+      if (this.myEl && this.partnerEl) {
+        console.log('✅ Video elements found after', attempts, 'attempts');
+        resolve();
+      } else if (attempts >= maxAttempts) {
+        console.error('Video elements not found:', {
+          myVideoRef: !!this.myVideoRef,
+          partnerVideoRef: !!this.partnerVideoRef,
+          myVideoDOM: !!document.querySelector('#my-video'),
+          partnerVideoDOM: !!document.querySelector('#partner-video')
+        });
+        reject(new Error(`Video elements not found after ${maxAttempts} attempts`));
+      } else {
+        setTimeout(checkElements, 150); // Slightly longer delay
+      }
+    };
+    
+    // Initial check after a brief delay to allow rendering
+    setTimeout(checkElements, 100);
+  });
+}
+
+handleVideoError(type: 'local' | 'partner') {
+  console.error(`${type} video error`);
+  this.toastService.presentStdToastr(`${type} video failed to load`);
+}
 getUserId() {
   this.route.paramMap.subscribe((params) => {
       this.userId = params.get('id');
@@ -154,8 +368,9 @@ getUser() {
 }
 
 
-getAuthUser() {
-  console.log('🔍 Starting authentication process...');
+  async getAuthUser(): Promise<void> {
+    return new Promise((resolve) => {
+      console.log('🔍 Starting authentication process...');
   
   const getToken = async (): Promise<string | null> => {
     console.log('🔑 Attempting to retrieve token...');
@@ -208,17 +423,16 @@ getAuthUser() {
         mainAvatar: decoded.mainAvatar || ''
       });
       
-      console.log("🔐 Successfully initialized authenticated user:", {
-        id: this.authUser._id,
-        name: `${this.authUser.firstName} ${this.authUser.lastName}`,
-        hasAvatar: !!this.authUser.mainAvatar
+          console.log("🔐 Auth user initialized:", this.authUser._id);
+          resolve();
+        } catch (error) {
+          console.error("❌ Token decoding failed:", error);
+          this.router.navigate(['/auth/signin']);
+        }
       });
-    } catch (error) {
-      console.error("❌ Token decoding failed with error:", error);
-      this.router.navigate(['/auth/signin']);
-    }
-  });
-}
+    });
+  }
+
 
   handleUserInitError() {
     this.pageLoading = false;
@@ -391,47 +605,95 @@ async emitWebSocketEvent(eventName: string, data: any) {
   
 }
 
-async call() {
-  console.log("📞 Initiating video call...");
+/**
+ * Call the other user.
+ * Preconditions:
+ *   – this.authUser      is already populated   (ngOnInit → getAuthUser)
+ *   – this.userId        holds partner’s user-id (route param)
+ *   – webRTC.createPeer(authUser._id) was called once after login
+ */
+/* ───────────────────────── video.component.ts ───────────────────────── */
+async call(): Promise<void> {
+  console.log('📞 Initiating video call…');
 
-  const callerId = this.authUser._id;
-  const receiverId = this.userId;
-
-  if (!callerId || !receiverId) {
-    console.error("❌ Missing IDs - Caller:", callerId, "Receiver:", receiverId);
+  /* 0 — sanity -------------------------------------------------------- */
+  if (!this.authUser?._id || !this.userId) {
+    console.error('❌ Missing authUser._id or partner userId');
     return;
   }
 
   try {
+    /* 1 — make sure the <video> elements exist ------------------------ */
+    if (!this.myEl || !this.partnerEl) {
+      await this.waitForVideoElements();
+    }
+
+    /* 2 — guarantee a live & open PeerJS instance --------------------- */
+    if (!WebrtcService.peer || WebrtcService.peer.destroyed) {
+      console.warn('♻️  PeerJS not ready – creating…');
+      await this.webRTC.createPeer(this.authUser._id);
+    }
+
+    /* NEW ▸ if peer is still null create it once more (rare) */
+    if (!WebrtcService.peer) {
+      await this.webRTC.createPeer(this.authUser._id);
+    }
+
+    /* NEW ▸ wait for the “open” event, retry once on failure */
+    let opened = false;
+    for (let i = 0; i < 2 && !opened; i++) {
+      try {
+        await this.webRTC.waitForPeerOpen();   // throws if peer == null
+        opened = true;
+      } catch (e) {
+        console.warn(`⏳ peer.open attempt ${i + 1} failed:`, e.message);
+        await this.webRTC.createPeer(this.authUser._id);     // same id
+      }
+    }
+    if (!opened) throw new Error('PeerJS could not be opened');
+
     const myPeerId = this.webRTC.getPeerId();
-    if (!myPeerId) {
-      console.error("❌ My Peer ID is not initialized.");
-      return;
-    }
+    if (!myPeerId) throw new Error('Peer-ID still missing after open()');
 
-    // ✅ Step 1: Get partner's peerId from backend
-    const partnerPeerId = await this.userService.getPartnerPeerId(receiverId).toPromise();
-
-    if (!partnerPeerId || partnerPeerId === myPeerId) {
-      console.warn("⚠️ Partner Peer ID is invalid or same as mine.");
-      return;
-    }
-
-    // ✅ Step 2: Initiate call
-    console.log(`📞 Calling partner with Peer ID: ${partnerPeerId}`);
+    /* 3 — lookup partner’s current peer-id ---------------------------- */
+    const partnerPeerId =
+    await this.userService.getPartnerPeerId(this.userId).toPromise();
+  
+  if (!partnerPeerId) {
+    throw new Error('Partner is offline or has no peer-id');
+  }
+  
+  /* NEW 3b — ping the peer before dialling --------------------------- */
+  const online = await this.webRTC.checkPeerOnline(partnerPeerId);
+  if (!online) {
+    this.toastService.presentStdToastr('User is offline at the moment.');
+    return;                                   // abort call here
+  }
+  if (!online) {                    // already shows toast
+    window.dispatchEvent(new CustomEvent('peer-call-error'));
+    return;
+  }
+  
+    /* 4 — dial -------------------------------------------------------- */
+    console.log(`📞 Calling partner – myId=${myPeerId} → partnerId=${partnerPeerId}`);
     await this.webRTC.callPartner(partnerPeerId);
     this.calling = true;
+
+    /* 5 — notify via socket ------------------------------------------ */
     await this.emitWebSocketEvent('video-call-started', {
-      from: this.authUser._id,
-      to: this.userId
+      from        : this.authUser._id,
+      to          : this.userId,
+      myPeerId,
+      partnerPeerId
     });
-    
-  } catch (error) {
-    console.error("❌ Call failed:", error);
-    this.toastService.presentStdToastr('Call initialization failed');
+
+  } catch (err) {
+    console.error('❌ Call failed:', err);
+    this.toastService.presentStdToastr('Call failed. Please try again.');
     this.closeCall();
   }
 }
+
 
 
 
@@ -443,6 +705,7 @@ async call() {
         this.pauseAudio();
         this.messengerService.sendMessage({ event: 'stop-audio' });
         this.answered = true;
+        this.cdr.detectChanges(); // ✅ Force update
         this.countVideoCalls();
         this.swapVideo('my-video');
         clearInterval(timer);
@@ -493,23 +756,43 @@ async call() {
     }
   }
 
-  closeCall() {
-    console.log("📴 Closing the call...");
-
-    if (this.socket) {
-        this.emitWebSocketEvent('cancel-video', this.partner.id);
+  async closeCall() {
+    console.log("📴 Closing the call with full cleanup...");
+    
+    // 1. Stop all media streams
+    if (this.webRTC.myStream) {
+      this.webRTC.myStream.getTracks().forEach(track => {
+        track.stop();
+        track.enabled = false;
+      });
     }
-
-    this.cancel(true); // ✅ Pass `true` to indicate manual close
-
-    // ✅ Clear stored partner ID
-    localStorage.removeItem('partnerId');
-
+  
+    // 2. Clear video elements
+    if (this.myEl) {
+      this.myEl.srcObject = null;
+      this.myEl.pause();
+    }
+    if (this.partnerEl) {
+      this.partnerEl.srcObject = null;
+      this.partnerEl.pause();
+    }
+  
+    // 3. Close WebRTC connection
+    this.webRTC.close();
+  
+    // 4. Notify the other user
+    if (this.socket) {
+      this.emitWebSocketEvent('video-call-ended', {
+        from: this.authUser._id,
+        to: this.userId
+      });
+    }
+  
+    // 5. Navigate away
     setTimeout(() => {
-        console.log("🔄 Redirecting user to previous page...");
-        this.router.navigate(['/auth/home']);
-    }, 1000);
-}
+      this.router.navigate(['/auth/home']);
+    }, 500);
+  }
 
 
 
@@ -520,11 +803,8 @@ async call() {
     this.messengerService.sendMessage({ event: 'stop-audio' });
 
     // ✅ Ensure WebRTC stream is stopped and video elements are reset
-    if (this.webRTC && this.webRTC.myStream) {
-        console.log("✅ Closing WebRTC stream...");
-        this.webRTC.myStream.getTracks().forEach(track => track.stop());
-        this.webRTC.myStream = null;
-    }
+    this.webRTC.close(); // ✅ centralized cleanup
+
 
     // ✅ Reset video elements
     if (this.myEl) {
@@ -558,22 +838,25 @@ answerCall() {
   this.pauseAudio();
   this.messengerService.sendMessage({ event: 'stop-audio' });
 
-  if (WebrtcService.call) {
-    this.webRTC.answer(WebrtcService.call);
-  } else {
-    console.warn("⚠️ No active call found. Will retry shortly...");
-    setTimeout(() => {
-      if (WebrtcService.call) {
-        this.webRTC.answer(WebrtcService.call);
-      } else {
-        console.error("❌ Still no call available to answer.");
-      }
-    }, 1000);
-  }  
+  const waitForCall = (retries = 5) => {
+    if (WebrtcService.call) {
+      console.log("📞 Answering call from:", WebrtcService.call.peer);
+      this.webRTC.answer(WebrtcService.call);
+      this.countVideoCalls();
+      this.waitForAnswer();
+      LocalNotifications.cancel({ notifications: [{ id: 1 }] });
 
-  this.countVideoCalls(); // ✅ Track answered calls
-  this.waitForAnswer();
+    } else if (retries > 0) {
+      console.warn("⏳ Waiting for WebrtcService.call to be set...");
+      setTimeout(() => waitForCall(retries - 1), 500);
+    } else {
+      console.error("❌ Still no call available to answer.");
+    }
+  };
+
+  waitForCall();
 }
+
 
 
   toggleAudio() {
@@ -597,37 +880,7 @@ answerCall() {
     this.webRTC.toggleCameraDirection();
   }
 
-  ionViewWillLeave() {
-    console.log("🔄 Cleaning up before leaving the video call page...");
 
-    if (this.audio) {
-        this.audio.pause();
-    }
-    this.messengerService.sendMessage({ event: 'stop-audio' });
-
-    if (this.webRTC && this.webRTC.myStream) {
-        console.log("✅ Stopping WebRTC stream...");
-        this.webRTC.myStream.getTracks().forEach(track => track.stop());
-        this.webRTC.myStream = null;
-    }
-
-    if (this.myEl) {
-        this.myEl.srcObject = null;
-    }
-    if (this.partnerEl) {
-        this.partnerEl.srcObject = null;
-    }
-
-    if (this.socket) {
-        console.log("✅ Disconnecting WebSocket...");
-        this.socket.emit('disconnect-user');
-        this.socket.disconnect();
-        this.socket = null;
-    }
-}
-
-
-  
   
   isCordovaAvailable(): boolean {
     return !!(window.cordova && window.cordova.platformId !== 'browser');

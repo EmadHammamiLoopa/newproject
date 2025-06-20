@@ -8,6 +8,8 @@ import { BehaviorSubject } from 'rxjs';
 import { UserService } from './user.service';
 import { ToastService } from './toast.service';
 import { User } from '../models/User';
+import { SocketService } from './socket.service';
+import { NativeStorage } from '@ionic-native/native-storage/ngx';
 
 @Injectable({
   providedIn: 'root'
@@ -20,9 +22,9 @@ export class WebrtcService {
   partnerEl: HTMLMediaElement;
   missedCalls$ = new BehaviorSubject([]);
   user: User = new User(); // ✅ Added `user` property here
+  private peerHeartbeatInterval: any;
 
   userId: string;
-partnerId: string;
 myPeerId: string;
 
   stun = 'stun.l.google.com:19302';
@@ -35,7 +37,7 @@ myPeerId: string;
   facingMode = "user";
 
   constructor(private androidPermission: AndroidPermissions, private permissionService: PermissionService,
-              private router: Router,     private userService: UserService,private toastService: ToastService          ) {
+              private router: Router,private nativeStorage: NativeStorage,private socketService: SocketService,   private userService: UserService,private toastService: ToastService          ) {
     this.options = {
       key: 'cd1ft79ro8g833di',
       debug: 3
@@ -60,81 +62,152 @@ myPeerId: string;
 
   async init(myEl: HTMLMediaElement, partnerEl: HTMLMediaElement): Promise<boolean> {
     try {
+      // ✅ First validate and store the elements
       if (!myEl || !partnerEl) {
-        console.error("❌ Cannot initialize WebRTC: one or both video elements are undefined.");
+        console.error("❌ Cannot initialize WebRTC: video elements are undefined");
         return false;
       }
-  
-      // ✅ Store the elements before any stream assignment
+      
       this.myEl = myEl;
       this.partnerEl = partnerEl;
-  
+      
+      // ✅ Then request permissions
       const hasPermissions = await this.requestPermissions();
-      if (!hasPermissions) {
-        console.error("❌ Cannot proceed: Permissions not granted.");
-        return false;
-      }
-  
+      if (!hasPermissions) return false;
+      
+      // ✅ Finally get the media stream
       this.myStream = await this.getUserMedia();
-      if (!this.myStream) {
-        console.error("❌ Failed to initialize media stream.");
-        return false;
-      }
-  
-      console.log("✅ WebRTC initialized successfully.");
+      if (!this.myStream) return false;
+      
       return true;
-  
     } catch (error) {
-      console.error("❌ Error initializing WebRTC:", error);
+      console.error("WebRTC initialization failed:", error);
       return false;
     }
   }
   
   getPeerId(): string {
-    return this.myPeerId;
+
+    /* (a) already cached in RAM? */
+    if (this.myPeerId)                     return this.myPeerId;
+
+    /* (b) PeerJS already knows? */
+    if (WebrtcService.peer?.id)            return WebrtcService.peer.id;
+
+    /* (c) persisted in localStorage? */
+    const fromLS = localStorage.getItem('peerId');
+    if (fromLS) {
+      this.myPeerId = fromLS;
+      return fromLS;
+    }
+
+    /* (d) persisted in NativeStorage? (sync fallback) */
+    if ((window as any).cordova) {
+      /* NativeStorage is async, but we can do a *very* small trick:
+         read it synchronously from the plugin’s internal cache if present */
+      // @ts-ignore
+      const cached = this.nativeStorage?._db?.storage?.peerId;
+      if (cached) {
+        this.myPeerId = cached;
+        return cached;
+      }
+    }
+
+    /* (e) still nothing */
+    return null;
+  }
+
+  
+  private startPeerIdHeartbeat(userId: string, peerId: string) {
+    if (this.peerHeartbeatInterval) {
+      clearInterval(this.peerHeartbeatInterval);
+    }
+  
+    this.peerHeartbeatInterval = setInterval(() => {
+      this.userService.heartbeatPeer(userId)     // new lightweight call
+        .catch(err => console.error('❌ heartbeat failed:', err));
+    }, 60_000);                                   // every 60 s
   }
   
 
-  async createPeer(authUserId: string, partnerId?: string): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-      this.userId = authUserId;
-      this.partnerId = partnerId;
+// webrtc.service.ts  ── just replace the whole method
+// ✅ keep THIS one
+public waitForPeerOpen(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    /* 🚦 1 — make sure the Peer instance exists */
+    if (!WebrtcService.peer) {
+      return reject(new Error('PeerJS instance not created yet'));
+    }
+    /* 🚦 2 — already open … */
+    if (WebrtcService.peer.open) return resolve();
+    /* 🚦 3 — wait max 10 s … */
+    const timeout = setTimeout(
+      () => reject(new Error('⏰ peer.open timeout (10 s)')), 10_000
+    );
+    WebrtcService.peer.once('open', () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+  });
+}
+
+
+  private creatingPeer = false;         // ⇦  guard
+
+  async createPeer(authUserId: string): Promise<void> {
+    if (this.creatingPeer) return;
+    if (WebrtcService.peer && WebrtcService.peer.open) return;
+    this.creatingPeer = true;
   
-      console.log(`🔵 Creating PeerJS connection for user: ${authUserId}`);
-  
-      const myPeerId = `${authUserId}-${Math.random().toString(36).substr(2, 5)}`;
-      this.myPeerId = myPeerId;
+    return new Promise((resolve, reject) => {
+      const myPeerId = authUserId;
+      this.myPeerId  = myPeerId;
+      this.userId    = authUserId;
   
       WebrtcService.peer = new Peer(myPeerId, {
         host: 'peerjs-whei.onrender.com',
-        secure: true,
         port: 443,
+        secure: true,
         path: '/peerjs',
-        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] },
-      });
-  
-      WebrtcService.peer.on('open', async (id) => {
-        console.log(`✅ PeerJS connected with ID: ${id}`);
-        localStorage.setItem('myPeerId', id);
-  
-        try {
-          await this.userService.sendPeerIdToBackend(authUserId, id);
-          console.log(`📤 Sent Peer ID to backend`);
-          resolve();
-        } catch (err) {
-          console.error("❌ Failed to send Peer ID to backend:", err);
-          reject(err);
+        config: { 
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ] 
         }
       });
+      
   
-      WebrtcService.peer.on('error', (err) => {
-        console.error('❌ PeerJS Error:', err);
-        reject(err);
+      WebrtcService.peer.once('open', async () => {
+        console.log('✅ peer open');
+        localStorage.setItem('peerId', myPeerId);
+        try { await this.nativeStorage.setItem('peerId', myPeerId); } catch {}
+        await this.userService.sendPeerIdToBackend(authUserId, myPeerId);
+        try {
+          const socket = await SocketService.getSocket();
+          socket.emit('online', { userId: authUserId, peerId: myPeerId });
+          console.log('📡 Emitted "online" event via socket:', { userId: authUserId, peerId: myPeerId });
+        } catch (err) {
+          console.warn('⚠️ Could not emit "online" event:', err);
+        }
+        this.startPeerIdHeartbeat(authUserId, myPeerId);
+        this.creatingPeer = false;
+        resolve();
+      });
+  
+      WebrtcService.peer.on('error', err => {
+        if (err.type === 'unavailable-id') {
+          console.warn('♻️ id in use – waiting 3 s then reconnect');
+          setTimeout(() => { try { WebrtcService.peer?.reconnect(); } catch {} }, 3000);
+          return;
+        }
+        console.error('peer error:', err);
       });
     });
   }
   
-
+  
+  
 
 
 
@@ -151,34 +224,61 @@ myPeerId: string;
     }
   }
 
-  async callPartner(partnerPeerId: string) {
-    console.log(`📞 Attempting to call partner with Peer ID: ${partnerPeerId}`);
+// Add to WebrtcService
+private callState = new BehaviorSubject<{connected: boolean, type: 'caller' | 'receiver'}>(null);
+public callState$ = this.callState.asObservable();
 
-    if (!partnerPeerId) {
-        console.error("❌ Partner's Peer ID is missing. Cannot call.");
-        this.toastService.presentStdToastr("User is offline or unavailable.");
-        return;
+async callPartner(partnerPeerId: string) {
+  console.log(`📞 Attempting to call partner with Peer ID: ${partnerPeerId}`);
+
+  if (!this.myEl || !this.partnerEl) {
+    console.error("❌ Cannot call: video elements not initialized");
+    return;
+  }
+  
+  if (!this.myStream) {
+    console.error("❌ Cannot call: no local media stream");
+    return;
+  }
+
+  if (!partnerPeerId) {
+    console.error("❌ Partner's Peer ID is missing. Cannot call.");
+    this.toastService.presentStdToastr("User is offline or unavailable.");
+    return;
+  }
+
+  WebrtcService.call = WebrtcService.peer.call(partnerPeerId, this.myStream);
+  this.callState.next({connected: false, type: 'caller'}); // Set initial state
+
+  if (!WebrtcService.call) {
+    console.error("❌ WebRTC Call object is undefined.");
+    return;
+  }
+
+/* ────────── remote stream + close handling ────────── */
+WebrtcService.call.on('stream', stream => {
+  const attach = () => {
+    if (this.partnerEl) {
+      this.partnerEl.srcObject = stream;
+      this.callState.next({ connected: true, type: 'caller' });
+    } else {
+      setTimeout(attach, 100);
     }
+  };
+  attach();
+});
 
-    WebrtcService.call = WebrtcService.peer.call(partnerPeerId, this.myStream);
+/* 🔑 unified close / error → reset + broadcast */
+const closed = () => {
+  this.callState.next(null);
+  window.dispatchEvent(new CustomEvent('peer-call-closed'));
+};
+WebrtcService.call.on('close',  closed);
+WebrtcService.call.on('error', closed);
 
-    if (!WebrtcService.call) {
-        console.error("❌ WebRTC Call object is undefined.");
-        return;
-    }
 
-    WebrtcService.call.on("stream", (stream) => {
-        if (this.partnerEl) {
-            this.partnerEl.srcObject = stream;
-            console.log("✅ Remote stream received.");
-        } else {
-            console.error("❌ Partner video element is undefined.");
-        }
-    });
-
-    console.log("✅ Call initiated successfully.");
+  console.log("✅ Call initiated successfully.");
 }
-
 
   
 
@@ -205,7 +305,8 @@ async getUserMedia(): Promise<MediaStream | null> {
       video: { facingMode: "user" },
       audio: true
     });
-
+    console.log("🎙️ Audio tracks:", stream.getAudioTracks());
+    console.log("📹 Video tracks:", stream.getVideoTracks());
     this.handleSuccess(stream);
     console.log("✅ Media stream initialized successfully.");
     return stream;
@@ -270,41 +371,82 @@ storeMissedCall(userId: string) {
 }
 
 
-
-wait() {
+async wait() {
   console.log("📡 Waiting for incoming calls...");
 
   WebrtcService.peer.on("call", async (call) => {
     console.log("📞 Incoming call detected from:", call.peer);
 
-    // 👉 Ensure media stream is ready before answering
-    if (!this.myStream) {
-      console.log("🎥 Media stream not ready. Attempting to getUserMedia...");
-      this.myStream = await this.getUserMedia();
-
+    try {
+      // 👉 Ensure media stream is ready before answering
       if (!this.myStream) {
-        console.error("❌ Cannot answer: No media stream available.");
-        return;
+        console.log("🎥 Media stream not ready. Attempting to getUserMedia...");
+        this.myStream = await this.getUserMedia();
+
+        if (!this.myStream) {
+          console.error("❌ Cannot answer: No media stream available.");
+          return;
+        }
+
+        if (this.myEl) {
+          this.myEl.srcObject = this.myStream;
+        }
       }
 
-      this.myEl.srcObject = this.myStream;
+      WebrtcService.call = call;
+      const partnerId = call.peer.split('-')[0]; // Extract actual user ID
+      localStorage.setItem('partnerId', partnerId);
+
+      // ✅ Use Angular Router for navigation instead of window.location
+      if (!this.router.url.includes('/messages/video')) {
+        console.log("🔁 Navigating to video call screen...");
+        
+        // Store the call reference before navigation
+        const navigationSuccess = await this.router.navigate(
+          ['/messages/video', partnerId], 
+          { 
+            queryParams: { answer: true },
+            state: { incomingCall: true } // Optional: pass state data
+          }
+        );
+
+        if (!navigationSuccess) {
+          console.error("❌ Navigation to video screen failed");
+          call.close();
+          return;
+        }
+      }
+
+      // Setup stream handlers
+      call.on("stream", (remoteStream) => {
+        console.log("✅ Remote stream received in wait().");
+        
+        // Check if we're on the video page before assigning stream
+        if (this.router.url.includes('/messages/video') && this.partnerEl) {
+          console.log("🎥 partnerEl is defined in wait(), assigning stream.");
+          this.partnerEl.srcObject = remoteStream;
+        } else {
+          console.warn("⚠️ Not on video page or partnerEl not available");
+        }
+      });
+
+      call.on("close", () => {
+        console.log("📴 Call closed by remote peer");
+        if (this.partnerEl) this.partnerEl.srcObject = null;
+      });
+
+      call.on("error", (err) => {
+        console.error("❌ Call error:", err);
+        if (this.partnerEl) this.partnerEl.srcObject = null;
+      });
+
+    } catch (error) {
+      console.error("❌ Error handling incoming call:", error);
+      if (call) call.close();
     }
-
-    call.answer(this.myStream); // ✅ Answer with stream
-    WebrtcService.call = call;
-
-    call.on("stream", (remoteStream) => {
-      console.log("✅ Remote stream received.");
-      if (this.partnerEl) {
-        this.partnerEl.srcObject = remoteStream;
-      }
-    });
-
-    call.on("error", (err) => {
-      console.error("❌ Call error:", err);
-    });
   });
 }
+
 
 
 
@@ -332,12 +474,17 @@ handleSuccess(stream: MediaStream) {
   this.myStream = stream;
 
   if (!this.myEl) {
-    console.warn("⚠️ myEl is undefined during handleSuccess(). Will not assign stream to video element yet.");
+    console.warn("⚠️ Video element not ready yet. Stream will be assigned later.");
     return;
   }
 
-  this.myEl.srcObject = stream;
-  console.log("✅ Local stream assigned to myEl");
+  try {
+    this.myEl.srcObject = stream;
+    this.myEl.muted = true; // Important for local playback
+    console.log("✅ Stream successfully assigned to video element");
+  } catch (error) {
+    console.error("❌ Error assigning stream to video element:", error);
+  }
 }
 
 
@@ -366,51 +513,102 @@ handleSuccess(stream: MediaStream) {
 
   answer(call?: MediaConnection) {
     if (!this.myStream) {
-        console.error("❌ Cannot answer: No media stream available.");
-        return;
+      console.error("❌ Cannot answer: No media stream available.");
+      return;
     }
-
-    // If no call object is passed, use the static stored call
-    if (!call) {
-        call = WebrtcService.call;
+  
+    const activeCall = call || WebrtcService.call;
+    if (!activeCall) {
+      console.error("❌ No incoming call to answer.");
+      return;
     }
-
-    if (!call) {
-        console.error("❌ No incoming call to answer.");
-        return;
+  
+    console.log("📞 Answering call from:", activeCall.peer);
+    activeCall.answer(this.myStream);
+    this.callState.next({connected: false, type: 'receiver'});
+  
+/* ────────── remote stream + close handling ────────── */
+activeCall.on('stream', remote => {
+  const attach = () => {
+    if (this.partnerEl) {
+      this.partnerEl.srcObject = remote;
+      this.callState.next({ connected: true, type: 'receiver' });
+    } else {
+      setTimeout(attach, 100);
     }
+  };
+  attach();
+});
 
-    console.log("📞 Answering call from:", call.peer);
-    call.answer(this.myStream); // ✅ Answer with our media stream
-
-    call.on('stream', (remoteStream) => {
-        console.log("✅ Remote stream received.");
-        this.partnerEl.srcObject = remoteStream;
-    });
-
-    call.on('error', (err) => {
-        console.error("❌ Call error:", err);
-    });
-
-    WebrtcService.call = call; // ✅ Store the active call instance
-}
+/* 🔑 unified close / error → reset + broadcast */
+const closed = () => {
+  this.callState.next(null);
+  window.dispatchEvent(new CustomEvent('peer-call-closed'));
+};
+activeCall.on('close',  closed);
+activeCall.on('error', closed);
 
 
+    WebrtcService.call = activeCall;
+  }
 
-  close() {
-    if (WebrtcService.call) {
-      WebrtcService.call.close();
-      WebrtcService.call = null;
+
+close() {
+  console.log("🛑 Closing WebRTC connections...");
+  
+  // Close the active call properly
+  if (WebrtcService.call) {
+    try {
+      // Check if close method exists
+      if (typeof WebrtcService.call.close === 'function') {
+        WebrtcService.call.close();
+      } else {
+        console.warn("⚠️ Call object doesn't have close method");
+      }
+    } catch (err) {
+      console.error("❌ Error closing call:", err);
     }
-    if (this.myStream) {
-      this.myStream.getTracks().forEach(track => track.stop());
-    }
-    if (WebrtcService.peer) {
-      WebrtcService.peer.destroy();
-    }
-    this.router.navigate(['/tabs/new-friends']);
+    WebrtcService.call = null;
+    window.dispatchEvent(new CustomEvent('peer-call-closed'));
 
   }
+
+  // Properly stop all media tracks
+  if (this.myStream) {
+    this.myStream.getTracks().forEach(track => {
+      try {
+        track.stop();
+        track.enabled = false;
+        if (this.myStream) {
+          this.myStream.removeTrack(track);
+        }
+      } catch (err) {
+        console.error("❌ Error stopping track:", err);
+      }
+    });
+    this.myStream = null;
+  }
+
+  // Clean up video elements
+  if (this.myEl) {
+    this.myEl.srcObject = null;
+    try {
+      this.myEl.pause();
+    } catch (err) {
+      console.error("❌ Error pausing video element:", err);
+    }
+  }
+  if (this.partnerEl) {
+    this.partnerEl.srcObject = null;
+    try {
+      this.partnerEl.pause();
+    } catch (err) {
+      console.error("❌ Error pausing partner video element:", err);
+    }
+  }
+
+
+}
 
   toggleCamera() {
     this.myStream.getVideoTracks()[0].enabled = !this.myStream.getVideoTracks()[0].enabled;

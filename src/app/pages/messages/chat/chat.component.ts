@@ -39,8 +39,6 @@ export class ChatComponent implements OnInit {
   @ViewChild('content') private content: IonContent;
   @ViewChild('infScroll') private infScroll: IonInfiniteScroll;
 
-  partnerId: string;
-
   messages: Message[] = [];
   socket: any;
   user: User;
@@ -65,7 +63,6 @@ export class ChatComponent implements OnInit {
     this.route.paramMap.subscribe(params => {
       const userId = params.get('id');
       if (userId) {
-        this.partnerId = userId;
         console.log("User ID detected:", userId);
         this.getUserProfile(userId);
         this.initializeSocket(userId); // Pass userId directly
@@ -447,7 +444,8 @@ async sendMessage(message, ind) {
   payload.to = this.user.id;
   payload.text = message.text || ''; // Ensure text is not undefined
   payload.state = 'sending'; // Mark as "sending" ⏳
-  payload.image = this.imageFile ? this.image : null;
+  payload.image = this.image || null;
+  
   payload.type = message.type || 'text';
   payload.productId = this.productId || null;
   payload.createdAt = new Date();
@@ -634,13 +632,10 @@ showUproduct() {
   }
 
   videoCall() {
-    if (this.authUser && this.partnerId) {
-      this.router.navigateByUrl('/messages/video/' + this.partnerId);
-    } else {
-      this.videoCallSubAlert();
-    }
+    if (this.authUser  && this.user) {
+      this.router.navigateByUrl('/messages/video/' + this.user.id);
+    } else this.videoCallSubAlert();
   }
-  
   
   async videoCallSubAlert() {
     const message = !this.user.friend ? ('You can only call friends, how about sending a friend request to ' + this.user.fullName) : ('You must subscribe to call ' + this.user.fullName);

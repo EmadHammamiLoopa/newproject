@@ -86,15 +86,27 @@ export class Message {
   set image(image: any) {
     if (!image || image === 'undefined' || image === 'null') {
       this._image = null;
+  
     } else if (typeof image === 'string') {
-      this._image = image.includes(constants.DOMAIN_URL) ? image : constants.DOMAIN_URL + image;
+      if (image.startsWith('data:image/')) {
+        // ✅ Keep base64 images as-is
+        this._image = image;
+      } else if (image.startsWith('http')) {
+        // ✅ Already a valid URL
+        this._image = image;
+      } else {
+        // ✅ Relative path from backend
+        this._image = constants.DOMAIN_URL + image;
+      }
+  
     } else if (typeof image === 'object' && image.path) {
-      // If `image` is an object, use its `path`
       this._image = constants.DOMAIN_URL + image.path;
+  
     } else {
-      this._image = null; // Default case if image is neither a string nor an object
+      this._image = null;
     }
   }
+  
   
   set type(type: string) {
     this._type = type;
